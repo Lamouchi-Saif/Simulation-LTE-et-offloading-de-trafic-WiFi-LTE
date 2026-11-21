@@ -1,0 +1,5 @@
+,nSwitch,nSwitch,nPingPong,nPingPong,offloadRx,offloadRx,tputMean_Mbps,tputMean_Mbps,tputCV,tputCV,lossPct,lossPct,delayMean_ms,delayMean_ms,delayMax_ms,delayMax_ms,outage_s,outage_s
+,mean,std,mean,std,mean,std,mean,std,mean,std,mean,std,mean,std,mean,std,mean,std
+configuration,,,,,,,,,,,,,,,,,,
+H=0 m,20.0,0.0,19.0,0.0,0.5128,0.0,2.0,0.0,0.00844,4.472135954999559e-05,0.0,0.0,9.183728,0.005533544975872637,22.7307,0.0,0.0,0.0
+H=5 m,19.0,0.0,18.0,0.0,0.5,0.0,2.0,0.0,0.00846,0.0,0.0,0.0,9.39735,0.005341306020066985,22.7307,0.0,0.0,0.0
