@@ -1,0 +1,92 @@
+Worker 4 demarre : Sat Nov 21 09:16:42 PM CET 2026
+
+========================================
+Simulation : B6_R40_V3_S4
+Rayon      : 40 m
+Vitesse    : 3 m/s
+Seed       : 4
+Debut      : Sat Nov 21 09:16:42 PM CET 2026
+[B6_R40_V3_S4] crit=distance R=40 H=5 v=3 b=3.19354 run=1 | bascules=2 (pingpong=0) offloadTx=0.339692 offloadRx=0.339692 sendErrors=0 theorie=0.340789 CV=0.00395354 perte=0%
+RESULTAT : OK
+Fin : Sat Nov 21 09:16:52 PM CET 2026
+
+========================================
+Simulation : B6_R40_V5_S4
+Rayon      : 40 m
+Vitesse    : 5 m/s
+Seed       : 4
+Debut      : Sat Nov 21 09:16:52 PM CET 2026
+[B6_R40_V5_S4] crit=distance R=40 H=5 v=5 b=3.19354 run=1 | bascules=2 (pingpong=0) offloadTx=0.198708 offloadRx=0.198708 sendErrors=0 theorie=0.204473 CV=0.00371947 perte=0%
+RESULTAT : OK
+Fin : Sat Nov 21 09:17:01 PM CET 2026
+
+========================================
+Simulation : B6_R40_V7_S4
+Rayon      : 40 m
+Vitesse    : 7 m/s
+Seed       : 4
+Debut      : Sat Nov 21 09:17:01 PM CET 2026
+[B6_R40_V7_S4] crit=distance R=40 H=5 v=7 b=3.19354 run=1 | bascules=2 (pingpong=1) offloadTx=0.141046 offloadRx=0.141046 sendErrors=0 theorie=0.146052 CV=0.00395354 perte=0%
+RESULTAT : OK
+Fin : Sat Nov 21 09:17:10 PM CET 2026
+
+========================================
+Simulation : B6_R50_V3_S4
+Rayon      : 50 m
+Vitesse    : 3 m/s
+Seed       : 4
+Debut      : Sat Nov 21 09:17:10 PM CET 2026
+[B6_R50_V3_S4] crit=distance R=50 H=5 v=3 b=3.99192 run=1 | bascules=2 (pingpong=0) offloadTx=0.423077 offloadRx=0.423077 sendErrors=0 theorie=0.425986 CV=0.00395354 perte=0%
+RESULTAT : OK
+Fin : Sat Nov 21 09:17:20 PM CET 2026
+
+========================================
+Simulation : B6_R50_V5_S4
+Rayon      : 50 m
+Vitesse    : 5 m/s
+Seed       : 4
+Debut      : Sat Nov 21 09:17:20 PM CET 2026
+[B6_R50_V5_S4] crit=distance R=50 H=5 v=5 b=3.99192 run=1 | bascules=2 (pingpong=0) offloadTx=0.249969 offloadRx=0.249969 sendErrors=0 theorie=0.255592 CV=0.00395354 perte=0%
+RESULTAT : OK
+Fin : Sat Nov 21 09:17:30 PM CET 2026
+
+========================================
+Simulation : B6_R50_V7_S4
+Rayon      : 50 m
+Vitesse    : 7 m/s
+Seed       : 4
+Debut      : Sat Nov 21 09:17:30 PM CET 2026
+[B6_R50_V7_S4] crit=distance R=50 H=5 v=7 b=3.99192 run=1 | bascules=2 (pingpong=1) offloadTx=0.179508 offloadRx=0.179508 sendErrors=0 theorie=0.182566 CV=0.00395354 perte=0%
+RESULTAT : OK
+Fin : Sat Nov 21 09:17:39 PM CET 2026
+
+========================================
+Simulation : B6_R60_V3_S4
+Rayon      : 60 m
+Vitesse    : 3 m/s
+Seed       : 4
+Debut      : Sat Nov 21 09:17:39 PM CET 2026
+[B6_R60_V3_S4] crit=distance R=60 H=5 v=3 b=4.79031 run=1 | bascules=2 (pingpong=0) offloadTx=0.512862 offloadRx=0.512862 sendErrors=0 theorie=0.511183 CV=0.00395354 perte=0%
+RESULTAT : OK
+Fin : Sat Nov 21 09:17:49 PM CET 2026
+
+========================================
+Simulation : B6_R60_V5_S4
+Rayon      : 60 m
+Vitesse    : 5 m/s
+Seed       : 4
+Debut      : Sat Nov 21 09:17:49 PM CET 2026
+[B6_R60_V5_S4] crit=distance R=60 H=5 v=5 b=4.79031 run=1 | bascules=2 (pingpong=0) offloadTx=0.301292 offloadRx=0.301292 sendErrors=0 theorie=0.30671 CV=0.00395354 perte=0%
+RESULTAT : OK
+Fin : Sat Nov 21 09:17:58 PM CET 2026
+
+========================================
+Simulation : B6_R60_V7_S4
+Rayon      : 60 m
+Vitesse    : 7 m/s
+Seed       : 4
+Debut      : Sat Nov 21 09:17:58 PM CET 2026
+[B6_R60_V7_S4] crit=distance R=60 H=5 v=7 b=4.79031 run=1 | bascules=2 (pingpong=0) offloadTx=0.217969 offloadRx=0.217969 sendErrors=0 theorie=0.219079 CV=0.00395354 perte=0%
+RESULTAT : OK
+Fin : Sat Nov 21 09:18:07 PM CET 2026
+Worker 4 termine. Echecs=0

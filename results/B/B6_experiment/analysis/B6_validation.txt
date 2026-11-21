@@ -1,0 +1,15 @@
+Source CSV : /home/clearlynotme/ns-3.48/results/tp3/B6_experiment/campaign_20261121_211642/raw
+Nombre de runs : 45
+Combinaisons : 9
+Graines : [1, 2, 3, 4, 5]
+Erreur maximale entre offloadTx déclaré et recalculé : 4.6153846e-06
+
+Anomalies :
+Aucune anomalie bloquante détectée.
+
+Figures :
+/home/clearlynotme/ns-3.48/results/tp3/B6_experiment/analysis/B6_offloading_vs_radius.png
+/home/clearlynotme/ns-3.48/results/tp3/B6_experiment/analysis/B6_offloading_vs_speed.png
+/home/clearlynotme/ns-3.48/results/tp3/B6_experiment/analysis/B6_heatmap_mean.png
+/home/clearlynotme/ns-3.48/results/tp3/B6_experiment/analysis/B6_heatmap_std.png
+/home/clearlynotme/ns-3.48/results/tp3/B6_experiment/analysis/B6_seed_dispersion.png

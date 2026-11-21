@@ -1,0 +1,3 @@
+flowId,src,dst,proto,txPkts,rxPkts,lostPkts,tput_Mbps,delayMean_ms,jitterMean_ms
+1,7.0.0.2,1.0.0.2,17,7917,7917,0,1.05084,17.5427,0.33067
+2,10.0.1.2,1.0.0.2,17,8333,8333,0,1.07019,1.25372,0.0487341

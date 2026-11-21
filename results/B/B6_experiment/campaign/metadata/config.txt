@@ -1,0 +1,17 @@
+Question=B6
+criterion=distance
+pattern=line
+radii=40 50 60
+speeds=3 5 7
+seeds=1 2 3 4 5
+workers=5
+hyst=5
+simTime=80
+offsetFrac=0.30
+shadowSigma=0
+distNoise=0
+rate=2
+pktSize=1200
+saveBins=false
+flowmon=true
+pcap=false
