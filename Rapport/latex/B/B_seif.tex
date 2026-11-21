@@ -1,86 +1,107 @@
-# Question B5 — Introduction d'une hystérésis
+% ============================================================
+% TP3 - PARTIE B : CRITERE ORIENTE TERMINAL
+% QUESTION B5 : INTRODUCTION D'UNE HYSTERESIS
+% ============================================================
 
-```latex
-\subsection{Question B5 : Introduction d'une hystérésis}
+% Packages nécessaires dans le préambule du document :
+% \usepackage[utf8]{inputenc}
+% \usepackage[T1]{fontenc}
+% \usepackage[french]{babel}
+% \usepackage{amsmath}
+% \usepackage{graphicx}
+% \usepackage{float}
+% \usepackage{booktabs}
+% \usepackage{array}
 
-\subsubsection{Objectif}
+\section{Question B.5 : Introduction d'une hystérésis}
 
-L'objectif de cette expérience est d'étudier l'effet de l'introduction
-d'une hystérésis dans le mécanisme de basculement entre les interfaces
-LTE et Wi-Fi.
+\subsection{Objectif}
 
-Dans la configuration à seuil unique, le terminal bascule vers le Wi-Fi
-lorsqu'il entre dans la zone de couverture du point d'accès et revient
-vers le LTE lorsqu'il en sort. Lorsque le terminal se déplace à proximité
-de la frontière de couverture, de petites variations de distance peuvent
-provoquer des basculements répétés entre les deux réseaux. Ce phénomène
-est appelé \textit{ping-pong}.
+L'objectif de cette expérience est d'étudier l'influence de
+l'introduction d'une hystérésis sur le mécanisme de bascule
+entre les interfaces LTE et Wi-Fi de l'UE.
 
-Pour limiter ce comportement, nous introduisons deux seuils distincts :
-un seuil d'entrée dans le hotspot Wi-Fi et un seuil de sortie. Cette
-séparation crée une zone d'hystérésis qui évite les changements
-d'interface immédiats lorsque le terminal oscille autour de la limite
-de couverture.
+Dans la question 3, la décision de bascule repose sur un seuil
+unique correspondant au rayon de couverture du point d'accès
+Wi-Fi. Cette approche peut provoquer des bascules répétées
+lorsque l'UE se déplace à proximité de la limite de couverture.
 
-\subsubsection{Principe de l'hystérésis}
+Afin de limiter ce phénomène, nous introduisons deux seuils
+distincts : un seuil d'entrée dans la couverture Wi-Fi et un
+seuil de sortie. Nous comparons ensuite le comportement du
+système avec et sans hystérésis, en étudiant principalement
+le nombre de bascules et la stabilité du débit reçu.
 
-Le rayon de couverture nominal du point d'accès Wi-Fi est fixé à
-$R=50\,\text{m}$. Le seuil d'hystérésis est noté $H$.
+\subsection{Principe de fonctionnement de l'hystérésis}
 
-Les deux seuils de décision sont définis par :
+Soit $R$ le rayon de couverture du point d'accès Wi-Fi et
+$H$ la demi-largeur de l'hystérésis.
 
-\[
-d_{\mathrm{entrée}} = R-H
-\]
+Les deux seuils sont définis par :
 
-\[
-d_{\mathrm{sortie}} = R+H
-\]
+\begin{equation}
+    R_{\mathrm{entrée}} = R-H
+\end{equation}
 
-La décision de basculement est alors prise selon les conditions suivantes :
+\begin{equation}
+    R_{\mathrm{sortie}} = R+H
+\end{equation}
 
-\[
+La décision de bascule dépend alors de la distance $d(t)$
+entre l'UE et le point d'accès Wi-Fi :
+
+\begin{equation}
 \begin{cases}
-\text{LTE} \rightarrow \text{Wi-Fi},
-& \text{si } d < R-H \\[4pt]
-\text{Wi-Fi} \rightarrow \text{LTE},
-& \text{si } d > R+H \\[4pt]
-\text{Conservation de l'état actuel},
-& \text{sinon}
+\mathrm{LTE} \rightarrow \mathrm{WiFi},
+& \text{si } d(t)<R-H \\[5pt]
+\mathrm{WiFi} \rightarrow \mathrm{LTE},
+& \text{si } d(t)>R+H
 \end{cases}
-\]
+\end{equation}
 
-où $d$ représente la distance entre le terminal mobile et le point
-d'accès Wi-Fi.
+Lorsque l'UE se trouve entre les deux seuils, l'interface
+précédemment sélectionnée est conservée. Cette zone
+intermédiaire permet d'éviter les changements d'interface
+provoqués par de petites variations de distance autour de
+la limite de couverture.
+
+Dans le cas particulier où $H=0$, les deux seuils deviennent
+identiques :
+
+\begin{equation}
+    R_{\mathrm{entrée}}=R_{\mathrm{sortie}}=R
+\end{equation}
+
+Ce cas correspond au mécanisme à seuil unique utilisé dans
+la question 3.
+
+\subsection{Protocole expérimental}
+
+Afin de mettre en évidence l'effet de l'hystérésis, nous
+conservons le même scénario de mobilité et les mêmes
+paramètres de simulation pour les deux configurations.
+
+L'UE suit une trajectoire de type \texttt{border}, qui lui
+permet d'osciller autour de la limite de couverture du
+point d'accès Wi-Fi. Cette trajectoire est adaptée à
+l'étude des bascules répétées.
+
+Le rayon de couverture est fixé à $50$ m et l'amplitude
+de déplacement autour de cette limite est fixée à $10$ m.
+L'UE se déplace à une vitesse de $5$ m/s pendant une durée
+de simulation de $80$ secondes.
 
 Deux configurations sont comparées :
 
 \begin{itemize}
-    \item \textbf{Configuration 1 :} $H=0\,\text{m}$.
-    Il s'agit du mécanisme à seuil unique, avec un seuil d'entrée et
-    de sortie égal à $50\,\text{m}$.
-
-    \item \textbf{Configuration 2 :} $H=5\,\text{m}$.
-    Le seuil d'entrée est fixé à $45\,\text{m}$ et le seuil de sortie
-    à $55\,\text{m}$.
+    \item \textbf{Configuration 1 :} absence d'hystérésis,
+    avec $H=0$ m.
+    \item \textbf{Configuration 2 :} introduction d'une
+    hystérésis de $H=5$ m.
 \end{itemize}
 
-La zone comprise entre les deux seuils constitue la zone d'hystérésis.
-Dans cette zone, le terminal conserve son interface réseau actuelle.
-
-\subsubsection{Protocole expérimental}
-
-Afin de comparer les deux configurations dans des conditions
-équivalentes, nous conservons le même scénario de mobilité et les
-mêmes paramètres de simulation.
-
-Le terminal mobile suit une trajectoire oscillante à proximité de la
-frontière du hotspot Wi-Fi. Le motif de mobilité \texttt{border} est
-utilisé avec une distance nominale de $50\,\text{m}$ et une amplitude
-de $10\,\text{m}$, ce qui permet au terminal de parcourir une zone
-comprise approximativement entre $40\,\text{m}$ et $60\,\text{m}$.
-
-Les paramètres de simulation sont présentés dans le tableau suivant.
+Les paramètres utilisés sont présentés dans le
+tableau~\ref{tab:b5_parameters}.
 
 \begin{table}[H]
     \centering
@@ -90,280 +111,357 @@ Les paramètres de simulation sont présentés dans le tableau suivant.
         \hline
         \textbf{Paramètre} & \textbf{Valeur} \\
         \hline
-        Rayon nominal du point d'accès $R$ & $50\,\text{m}$ \\
-        Amplitude de l'oscillation & $10\,\text{m}$ \\
-        Vitesse du terminal & $5\,\text{m/s}$ \\
-        Durée de simulation & $80\,\text{s}$ \\
-        Seuil d'hystérésis $H$ & $0\,\text{m}$ et $5\,\text{m}$ \\
-        Débit applicatif nominal & $2\,\text{Mbps}$ \\
-        Écart-type du shadowing & $0$ \\
-        Bruit sur la distance & $0$ \\
-        Offset & $0$ \\
-        Graine initiale & $1$ \\
-        Nombre de répétitions & $5$ par configuration \\
-        Capture PCAP & Désactivée \\
-        FlowMonitor & Activé \\
+        Type de trajectoire & \texttt{border} \\
+        \hline
+        Rayon de couverture $R$ & 50 m \\
+        \hline
+        Amplitude de déplacement & 10 m \\
+        \hline
+        Vitesse de l'UE & 5 m/s \\
+        \hline
+        Durée de simulation & 80 s \\
+        \hline
+        Demi-largeur d'hystérésis $H$ & 0 m et 5 m \\
+        \hline
+        Seuil d'entrée ($H=0$) & 50 m \\
+        \hline
+        Seuil de sortie ($H=0$) & 50 m \\
+        \hline
+        Seuil d'entrée ($H=5$) & 45 m \\
+        \hline
+        Seuil de sortie ($H=5$) & 55 m \\
+        \hline
+        Débit nominal & 2 Mbps \\
+        \hline
+        Shadowing & Désactivé \\
+        \hline
+        Bruit sur la distance & Désactivé \\
+        \hline
+        Graine initiale & 1 \\
+        \hline
+        Numéros de run & 1 à 5 \\
+        \hline
+        Fenêtre de détection du ping-pong & 15 s \\
         \hline
     \end{tabular}
 \end{table}
 
-Pour chaque valeur de $H$, cinq exécutions sont réalisées. Les
-indicateurs étudiés sont :
+Cinq exécutions sont réalisées pour chaque configuration,
+avec une graine initiale fixée à 1 et des numéros de run
+allant de 1 à 5. Le shadowing et le bruit sur la distance
+sont désactivés afin d'isoler l'effet de l'hystérésis.
 
+\subsection{Indicateurs de performance}
+
+Les résultats sont évalués à partir des fichiers CSV
+générés par la simulation.
+
+\subsubsection{Nombre total de bascules}
+
+Il correspond au nombre total de changements d'interface
+entre LTE et Wi-Fi :
+
+\begin{equation}
+    N_{\mathrm{switch}} =
+    N_{\mathrm{entrée}} + N_{\mathrm{sortie}}
+\end{equation}
+
+\subsubsection{Nombre d'événements de ping-pong}
+
+Le ping-pong représente les bascules successives séparées
+par un intervalle inférieur à une fenêtre temporelle de
+15 secondes.
+
+Une bascule est donc comptabilisée comme un événement de
+ping-pong lorsqu'elle intervient moins de 15 secondes
+après la bascule précédente.
+
+Cet indicateur permet d'évaluer la fréquence des
+changements d'interface rapprochés.
+
+\subsubsection{Stabilité du débit}
+
+La stabilité du débit est évaluée à l'aide du coefficient
+de variation (CV), défini par :
+
+\begin{equation}
+    CV = \frac{\sigma_{\mathrm{débit}}}
+    {\overline{D}}
+\end{equation}
+
+où :
 \begin{itemize}
-    \item le nombre total de basculements entre LTE et Wi-Fi ;
-    \item le nombre de phénomènes de ping-pong ;
-    \item le taux d'offloading Wi-Fi ;
-    \item le débit moyen reçu ;
-    \item le coefficient de variation du débit ;
-    \item le délai moyen et le délai maximal ;
-    \item le taux de pertes de paquets et la durée d'interruption.
+    \item $\sigma_{\mathrm{débit}}$ représente l'écart-type
+    du débit reçu ;
+    \item $\overline{D}$ représente le débit moyen reçu.
 \end{itemize}
 
-Le taux d'offloading correspond à la proportion du volume de données
-reçu par Wi-Fi par rapport au volume total reçu :
+Le débit est mesuré à partir des compteurs de réception
+regroupés dans des intervalles de 100 ms. Pour le calcul
+du coefficient de variation, les mesures sont ensuite
+agrégées sur des fenêtres successives d'une seconde.
 
-\[
-T_{\mathrm{offloading}} =
-\frac{V_{\mathrm{Wi-Fi}}}
-{V_{\mathrm{Wi-Fi}}+V_{\mathrm{LTE}}}
-\times 100
-\]
+Un CV faible indique une meilleure stabilité du débit,
+tandis qu'un CV élevé traduit des variations plus
+importantes.
 
-La stabilité du débit est notamment évaluée à l'aide du coefficient
-de variation :
+\subsubsection{Proportion du volume reçu via Wi-Fi}
 
-\[
-CV = \frac{\sigma_{\mathrm{débit}}}
-{\mu_{\mathrm{débit}}}
-\]
+À titre complémentaire, nous considérons la proportion
+du volume reçu via Wi-Fi :
 
-où $\sigma_{\mathrm{débit}}$ représente l'écart-type du débit mesuré
-et $\mu_{\mathrm{débit}}$ son débit moyen. Une valeur plus faible
-du coefficient de variation indique une dispersion relative plus faible
-du débit.
+\begin{equation}
+    P_{\mathrm{WiFi,Rx}} =
+    \frac{V_{\mathrm{WiFi,Rx}}}
+    {V_{\mathrm{WiFi,Rx}}+V_{\mathrm{LTE,Rx}}}
+\end{equation}
 
-\subsubsection{Résultats expérimentaux}
+Cet indicateur correspond au champ \texttt{offloadRx}
+généré par le programme. Il représente la proportion
+des octets reçus via Wi-Fi et ne doit pas être confondu
+avec le taux d'offloading basé sur le volume transmis.
 
-Les résultats obtenus lors des cinq répétitions sont synthétisés dans
-le tableau suivant. Les valeurs sont exprimées sous la forme
-moyenne $\pm$ écart-type.
+\subsection{Résultats expérimentaux}
+
+Les cinq exécutions de chaque configuration ont produit
+les mêmes nombres de bascules, les mêmes nombres
+d'événements de ping-pong et les mêmes proportions de
+trafic reçu via Wi-Fi.
+
+Les résultats obtenus sont présentés dans le
+tableau~\ref{tab:b5_results}.
 
 \begin{table}[H]
     \centering
-    \caption{Comparaison des performances pour $H=0\,\text{m}$ et
-    $H=5\,\text{m}$}
-    \label{tab:b5_comparison}
-    \small
+    \caption{Comparaison des résultats avec et sans hystérésis}
+    \label{tab:b5_results}
+    \resizebox{\textwidth}{!}{
     \begin{tabular}{|l|c|c|}
         \hline
-        \textbf{Indicateur} &
-        \textbf{$H=0\,\text{m}$} &
-        \textbf{$H=5\,\text{m}$} \\
+        \textbf{Indicateur}
+        & \textbf{Sans hystérésis ($H=0$)}
+        & \textbf{Avec hystérésis ($H=5$)} \\
         \hline
-        Nombre de bascules &
-        $20 \pm 0$ &
-        $19 \pm 0$ \\
+        Nombre moyen de bascules
+        & $20 \pm 0$ & $19 \pm 0$ \\
         \hline
-        Nombre de ping-pongs &
-        $19 \pm 0$ &
-        $18 \pm 0$ \\
+        Nombre moyen de ping-pong
+        & $19 \pm 0$ & $18 \pm 0$ \\
         \hline
-        Taux d'offloading &
-        $51.28 \pm 0\,\%$ &
-        $50.00 \pm 0\,\%$ \\
+        Proportion reçue via Wi-Fi
+        & 51,28 \% & 50,00 \% \\
         \hline
-        Débit moyen &
-        $2.00 \pm 0\,\text{Mbps}$ &
-        $2.00 \pm 0\,\text{Mbps}$ \\
+        Débit moyen
+        & 2,000 Mbps & 2,000 Mbps \\
         \hline
-        Coefficient de variation &
-        $0.00844 \pm 0.000045$ &
-        $0.00846 \pm 0$ \\
+        Coefficient de variation (CV)
+        & 0,00844 & 0,00846 \\
         \hline
-        Pertes de paquets &
-        $0 \pm 0\,\%$ &
-        $0 \pm 0\,\%$ \\
+        Taux de pertes
+        & 0 \% & 0 \% \\
         \hline
-        Délai moyen &
-        $9.184 \pm 0.006\,\text{ms}$ &
-        $9.397 \pm 0.005\,\text{ms}$ \\
+        Délai moyen
+        & 9,184 ms & 9,397 ms \\
         \hline
-        Délai maximal &
-        $22.731 \pm 0\,\text{ms}$ &
-        $22.731 \pm 0\,\text{ms}$ \\
+        Délai maximal
+        & 22,731 ms & 22,731 ms \\
         \hline
-        Durée d'interruption &
-        $0 \pm 0\,\text{s}$ &
-        $0 \pm 0\,\text{s}$ \\
+        Durée d'interruption mesurée
+        & 0 s & 0 s \\
         \hline
     \end{tabular}
+    }
 \end{table}
 
-\paragraph{Analyse du nombre de basculements}
+\subsection{Analyse et interprétation des résultats}
 
-Sans hystérésis, le terminal effectue 20 basculements pendant les
-80 secondes de simulation. Avec une hystérésis de $5\,\text{m}$,
-ce nombre passe à 19.
+\subsubsection{Effet sur le nombre de bascules}
 
-La réduction relative du nombre de basculements est donc :
+Sans hystérésis, le système effectue en moyenne
+20 bascules pendant la simulation.
 
-\[
-\frac{20-19}{20}\times 100 = 5\,\%
-\]
+Avec une hystérésis de 5 m, ce nombre diminue à
+19 bascules.
 
-Le nombre de phénomènes de ping-pong diminue également de 19 à 18,
-soit une réduction relative de :
+La réduction relative est donnée par :
 
-\[
-\frac{19-18}{19}\times 100 \approx 5.26\,\%
-\]
+\begin{equation}
+    \frac{20-19}{20}\times100 = 5\%
+\end{equation}
 
-L'hystérésis permet donc de réduire légèrement les changements
-d'interface. Toutefois, cette diminution reste limitée dans le
-scénario étudié.
+Cette diminution montre que l'introduction de deux
+seuils distincts limite légèrement les changements
+d'interface.
 
-\paragraph{Analyse des distances de basculement}
+Les fichiers \texttt{switches.csv} confirment également
+le déplacement des seuils de bascule :
 
-Les fichiers de suivi des événements permettent également d'observer
-les distances auxquelles les changements d'interface sont déclenchés.
+\begin{itemize}
+    \item Sans hystérésis, les transitions LTE vers Wi-Fi
+    se produisent à des distances comprises approximativement
+    entre 47,5 et 49,5 m. Les transitions Wi-Fi vers LTE
+    se produisent entre 50 et 52 m.
 
-Pour $H=0\,\text{m}$, les basculements LTE vers Wi-Fi sont observés
-à des distances comprises approximativement entre $47.5$ et
-$49.5\,\text{m}$. Les basculements Wi-Fi vers LTE apparaissent
-entre $50$ et $52\,\text{m}$.
+    \item Avec hystérésis, les transitions LTE vers Wi-Fi
+    se produisent entre 42,5 et 44,5 m, tandis que les
+    transitions Wi-Fi vers LTE se produisent entre
+    55 et 57 m.
+\end{itemize}
 
-Pour $H=5\,\text{m}$, les entrées dans le Wi-Fi se produisent entre
-$42.5$ et $44.5\,\text{m}$, tandis que les sorties du Wi-Fi sont
-observées entre $55$ et $57\,\text{m}$.
+Ces valeurs sont cohérentes avec les seuils théoriques
+de 45 m et 55 m. Les écarts observés s'expliquent par
+la période d'évaluation du mécanisme de décision,
+qui est de 0,5 seconde.
 
-Ces observations confirment le fonctionnement du mécanisme :
-le terminal doit se rapprocher davantage du point d'accès pour
-activer le Wi-Fi et s'en éloigner davantage avant de revenir au LTE.
-
-Les distances observées ne coïncident pas exactement avec les seuils
-théoriques, car la décision est évaluée périodiquement au cours de
-la simulation. Le changement d'interface est donc déclenché lors
-d'une vérification de la condition de basculement.
-
-\paragraph{Analyse du taux d'offloading}
-
-Le taux d'offloading passe de $51.28\,\%$ sans hystérésis à
-$50\,\%$ avec une hystérésis de $5\,\text{m}$.
-
-Cette diminution de $1.28$ point de pourcentage s'explique par la
-réduction de la période pendant laquelle le terminal utilise
-l'interface Wi-Fi. En effet, avec l'hystérésis, le terminal entre
-plus tard dans la zone Wi-Fi et revient plus tôt vers le LTE.
-
-L'introduction de l'hystérésis entraîne donc un léger compromis
-entre la réduction des basculements et le volume de trafic déchargé
-vers le Wi-Fi.
-
-\paragraph{Analyse de la stabilité du débit}
-
-Le débit moyen reçu reste égal au débit nominal de
-$2\,\text{Mbps}$ pour les deux configurations.
-
-Le coefficient de variation est de $0.00844$ pour $H=0\,\text{m}$
-et de $0.00846$ pour $H=5\,\text{m}$. Ces valeurs sont très proches.
-On observe même une très légère augmentation du coefficient de
-variation avec l'hystérésis.
-
-Par conséquent, dans les conditions de cette simulation, l'ajout
-d'une hystérésis de $5\,\text{m}$ ne produit pas d'amélioration
-mesurable de la stabilité du débit.
-
-Le délai moyen augmente légèrement, passant d'environ
-$9.184\,\text{ms}$ à $9.397\,\text{ms}$, tandis que le délai maximal
-reste identique. Les deux configurations présentent un taux de pertes
-nul et aucune interruption de service mesurée selon les indicateurs
-de cette expérience.
-
-\subsubsection{Représentation graphique des résultats}
-
-Les graphiques suivants permettent de comparer visuellement les
-deux configurations.
-
+% Figure 1 : Nombre de bascules
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]
     {img/B/B5_switches.png}
-    \caption{Comparaison du nombre de basculements pour les deux
-    valeurs du seuil d'hystérésis.}
+    \caption{Comparaison du nombre de bascules avec et sans hystérésis.}
     \label{fig:b5_switches}
 \end{figure}
 
+\subsubsection{Effet sur les événements de ping-pong}
+
+Le nombre d'événements de ping-pong passe de 19 sans
+hystérésis à 18 avec hystérésis.
+
+La réduction relative est :
+
+\begin{equation}
+    \frac{19-18}{19}\times100
+    \approx 5,26\%
+\end{equation}
+
+Cette diminution confirme que l'hystérésis réduit
+légèrement les changements d'interface rapprochés.
+
+Cependant, la différence reste limitée dans le
+scénario étudié.
+
+% Figure 2 : Evénements de ping-pong
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]
     {img/B/B5_pingpong.png}
-    \caption{Comparaison du nombre de phénomènes de ping-pong.}
+    \caption{Comparaison du nombre d'événements de ping-pong.}
     \label{fig:b5_pingpong}
 \end{figure}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]
-    {img/B/B5_offloading.png}
-    \caption{Comparaison du taux d'offloading Wi-Fi.}
-    \label{fig:b5_offloading}
-\end{figure}
+\subsubsection{Effet sur la stabilité du débit}
 
+Le débit moyen reste identique dans les deux
+configurations :
+
+\begin{equation}
+    \overline{D}_{H=0}
+    =
+    \overline{D}_{H=5}
+    =
+    2\ \mathrm{Mbps}
+\end{equation}
+
+Le coefficient de variation passe de 0,00844 à 0,00846.
+
+Cette légère augmentation indique que la dispersion
+relative du débit n'a pas diminué avec l'introduction
+de l'hystérésis. La différence observée reste toutefois
+très faible et ne permet pas de conclure à une
+dégradation significative de la stabilité.
+
+Ainsi, dans cette configuration, l'hystérésis réduit
+légèrement le nombre de bascules, mais ne produit pas
+d'amélioration mesurable de la stabilité du débit.
+
+% Figure 3 : Coefficient de variation du débit
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]
     {img/B/B5_throughput_cv.png}
-    \caption{Comparaison de la stabilité du débit à travers le
-    coefficient de variation.}
-    \label{fig:b5_throughput_cv}
+    \caption{Comparaison du coefficient de variation du débit reçu.}
+    \label{fig:b5_cv}
 \end{figure}
 
-\subsubsection{Discussion}
+\subsubsection{Effet sur le trafic et les performances}
 
-Les résultats montrent que l'introduction d'une hystérésis modifie
-effectivement le comportement du mécanisme de sélection du réseau.
-La séparation des seuils d'entrée et de sortie crée une zone dans
-laquelle le terminal conserve son interface actuelle, ce qui limite
-les changements répétés à proximité de la frontière du hotspot.
+La proportion du volume reçu via Wi-Fi diminue
+légèrement, passant de 51,28 \% à 50 \%.
 
-Dans notre scénario, le nombre de basculements diminue de $5\,\%$
-et le nombre de ping-pongs d'environ $5.26\,\%$. Cependant, cette
-amélioration reste modeste.
+Cette différence est cohérente avec le fait que l'UE
+entre plus tard dans la couverture Wi-Fi et la quitte
+plus tôt lorsque l'hystérésis est activée.
 
-Le taux d'offloading diminue légèrement, tandis que le débit moyen
-reste inchangé. Le coefficient de variation ne montre pas
-d'amélioration de la stabilité du débit. L'hystérésis apporte donc
-un bénéfice limité sur la fréquence des basculements, sans gain
-significatif sur les performances de transmission mesurées.
+Le débit moyen reste égal au débit nominal de 2 Mbps
+dans les deux configurations. Aucun paquet perdu ni
+aucune interruption de service mesurée n'ont été
+observés dans ces exécutions.
 
-Il convient également de préciser que les cinq répétitions présentent
-des résultats identiques pour la plupart des indicateurs. Cette
-faible dispersion est cohérente avec les paramètres retenus :
-la trajectoire est déterministe, le shadowing et le bruit sur la
-distance sont désactivés, et la graine initiale est conservée.
-Ces répétitions permettent de vérifier la reproductibilité du
-scénario, mais ne constituent pas une étude de la variabilité
-radio entre différentes graines aléatoires.
+Le délai moyen augmente légèrement, passant de
+9,184 ms à 9,397 ms, tandis que le délai maximal
+reste identique à 22,731 ms.
 
-\subsubsection{Conclusion}
+% Figure 4 : Proportion du volume reçu via Wi-Fi
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]
+    {img/B/B5_offloading.png}
+    \caption{Comparaison de la proportion du volume reçu via Wi-Fi.}
+    \label{fig:b5_offloading}
+\end{figure}
 
-Cette expérience a permis d'introduire et d'évaluer un mécanisme
-d'hystérésis dans le processus d'offloading Wi-Fi/LTE.
+\subsection{Discussion des résultats}
 
-La comparaison entre les configurations $H=0\,\text{m}$ et
-$H=5\,\text{m}$ montre que l'hystérésis réduit légèrement le nombre
-de basculements et de phénomènes de ping-pong. Elle permet ainsi
-d'éviter certaines transitions lorsque le terminal se trouve
-à proximité de la limite de couverture Wi-Fi.
+Les résultats montrent que l'introduction d'une
+hystérésis permet de réduire le nombre de changements
+d'interface lorsque l'UE se déplace à proximité de la
+limite de couverture Wi-Fi.
 
-Néanmoins, cette réduction s'accompagne d'une légère diminution
-du taux d'offloading, sans amélioration mesurable de la stabilité
-du débit. Le choix du seuil d'hystérésis représente donc un compromis
-entre la limitation des changements d'interface et l'exploitation
-de la couverture Wi-Fi.
+Néanmoins, l'amélioration observée reste modeste :
+le nombre total de bascules diminue de 5 \%, tandis
+que le nombre d'événements de ping-pong diminue
+d'environ 5,26 \%.
 
-Dans ce scénario particulier, une hystérésis de $5\,\text{m}$
-apporte une amélioration modeste du comportement de basculement,
-mais son effet sur les performances globales du réseau reste limité.
-```
+Par ailleurs, le coefficient de variation du débit
+reste pratiquement identique entre les deux
+configurations. L'hystérésis n'apporte donc pas,
+dans ce scénario, de gain significatif en matière
+de stabilité du débit.
+
+Il faut également préciser que les cinq exécutions
+utilisent la même graine initiale et que le shadowing
+ainsi que le bruit sur la distance sont désactivés.
+Les écarts-types nuls obtenus pour le nombre de
+bascules et les événements de ping-pong traduisent
+donc essentiellement la reproductibilité du scénario
+déterministe. Ces exécutions ne constituent pas une
+étude de la variabilité inter-graines.
+
+\subsection{Conclusion}
+
+Cette expérience a permis d'étudier l'influence de
+l'hystérésis sur le mécanisme de bascule entre LTE
+et Wi-Fi.
+
+En introduisant deux seuils distincts, un seuil
+d'entrée de 45 m et un seuil de sortie de 55 m,
+le nombre moyen de bascules passe de 20 à 19,
+soit une réduction de 5 \%.
+
+Le nombre d'événements de ping-pong diminue
+également, tandis que le débit moyen reste stable
+à 2 Mbps. Cependant, le coefficient de variation
+ne montre aucune amélioration notable de la
+stabilité du débit.
+
+Nous pouvons donc conclure que l'hystérésis
+constitue un mécanisme pertinent pour limiter
+les bascules répétées à proximité de la limite
+de couverture, mais que son efficacité dépend
+du scénario de mobilité et des paramètres choisis.
+Dans le scénario étudié, son apport est réel
+mais limité.
+
+% ============================================================
+% FIN DE LA QUESTION B5
+% ============================================================
