@@ -1,37 +1,55 @@
 % ============================================================
 % TP3 - PARTIE B : CRITERE ORIENTE TERMINAL
+% QUESTIONS B5 ET B6
+% ============================================================
+
+% ============================================================
 % QUESTION B5 : INTRODUCTION D'UNE HYSTERESIS
 % ============================================================
-% ============================================================
-% TP3 - PARTIE B - QUESTION 5 : HYSTERESIS
-% ============================================================
+
 \section{Question B.5 : introduction d'une hystérésis}
 
 \subsection{Objectif}
-La bascule à seuil unique de la question B.3 produit un effet ping-pong
-lorsque l'UE évolue près de la limite de couverture du point d'accès.
-On introduit deux seuils distincts et on compare, par rapport au seuil unique,
+
+La bascule à seuil unique de la question B.3 peut produire un effet
+ping-pong lorsque l'UE évolue près de la limite de couverture du point
+d'accès. On introduit deux seuils distincts afin de réduire les
+basculements répétés entre LTE et Wi-Fi.
+
+L'objectif est d'évaluer l'influence de la largeur de l'hystérésis sur
 le nombre de bascules, le taux d'offloading et la stabilité du débit.
 
 \subsection{Principe}
-Soit $R$ le rayon du hotspot et $H$ la demi-largeur d'hystérésis. La décision
-dépend de la distance mesurée $d(t)$ entre l'UE et l'AP :
+
+Soit $R$ le rayon du hotspot et $H$ la demi-largeur de l'hystérésis.
+La décision dépend de la distance mesurée $d(t)$ entre l'UE et l'AP :
+
 \begin{equation}
 \begin{cases}
-\text{LTE} \rightarrow \text{Wi-Fi} & \text{si } d(t) < R-H,\\[2pt]
-\text{Wi-Fi} \rightarrow \text{LTE} & \text{si } d(t) > R+H,
+\text{LTE} \rightarrow \text{Wi-Fi}
+& \text{si } d(t) < R-H,\\[2pt]
+\text{Wi-Fi} \rightarrow \text{LTE}
+& \text{si } d(t) > R+H.
 \end{cases}
 \end{equation}
-l'interface courante étant conservée entre ces deux seuils. Le cas $H=0$ est
-le seuil unique de la question B.3.
+
+Entre ces deux seuils, l'interface actuellement utilisée est conservée.
+Cette zone intermédiaire évite les changements d'interface provoqués
+par de petites variations de la distance mesurée.
+
+Le cas $H=0$ correspond au fonctionnement avec un seuil unique.
 
 \subsection{Protocole expérimental}
-L'UE suit la trajectoire \texttt{border} : il oscille le long de l'axe $x$
-autour de la limite d'entrée $d=R$, avec une amplitude $A$. Le scénario est
-volontairement défavorable : il maximise le risque de ping-pong.
-Le bruit de mesure de distance (gaussien, $\sigma_d$) est activé : sans lui, un
-canal déterministe ne ferait jamais « trembler » un seuil unique et la
-comparaison serait sans objet.
+
+L'UE suit la trajectoire \texttt{border} : elle oscille le long de l'axe
+$x$ autour de la limite d'entrée du hotspot, avec une amplitude $A$.
+Ce scénario permet d'étudier le comportement du mécanisme lorsque l'UE
+évolue à proximité de la frontière de couverture.
+
+Un bruit gaussien de mesure de distance est activé afin de représenter
+les imprécisions possibles de la mesure de position. Sans ce bruit,
+la trajectoire et la décision seraient déterministes pour une
+configuration donnée.
 
 \begin{table}[H]
 \centering
@@ -48,178 +66,360 @@ Vitesse de l'UE & \SI{2}{m/s}\\
 Durée de simulation & \SI{80}{s}\\
 Période de vérification du critère & \SI{0,5}{s}\\
 Bruit de mesure de distance $\sigma_d$ & \SI{2}{m}\\
-Shadowing & désactivé\\
+Shadowing & Désactivé\\
 Débit CBR (UDP) & \SI{2}{Mb/s}\\
 Fenêtre de détection du ping-pong & \SI{5}{s}\\
 Valeurs de $H$ & 0, 2, 5 et \SI{8}{m}\\
-Graine / numéros de run & graine fixe $=1$ / runs 1 à 10\\
-Nombre de simulations & $4\times 10 = 40$\\
+Graine / numéros de run & Graine fixe $=1$ / runs 1 à 10\\
+Nombre de simulations & $4\times 10=40$\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Les 10 réalisations par valeur de $H$ utilisent la même graine et des numéros
-de \texttt{run} différents (\texttt{RngSeedManager::SetRun}), ce qui fournit des
-flux aléatoires statistiquement indépendants. Les moyennes sont accompagnées de
-l'écart-type (correction de Bessel) ; les barres d'erreur des figures sont des
-intervalles de confiance à \SI{95}{\percent} (loi de Student).
+Les dix réalisations pour chaque valeur de $H$ utilisent une graine
+fixe égale à 1 et des numéros de run différents, de 1 à 10, via
+\texttt{RngSeedManager::SetRun()}.
+
+Les numéros de run permettent à NS-3 d'utiliser des flux aléatoires
+distincts. Ils constituent les dix réalisations utilisées pour
+l'estimation de la moyenne et de l'écart-type. Il ne faut cependant
+pas interpréter cette configuration comme une démonstration
+d'indépendance statistique absolue entre toutes les observations.
+
+Les moyennes sont accompagnées de l'écart-type expérimental, calculé
+avec la correction de Bessel. Les intervalles de confiance à
+\SI{95}{\percent} sont utilisés dans les figures lorsque cela est
+indiqué.
 
 \subsection{Indicateurs}
+
+Les indicateurs utilisés pour évaluer le mécanisme sont les suivants :
+
 \begin{itemize}
-\item \textbf{Nombre de bascules} $N_{\text{switch}}=N_{\text{entrée}}+N_{\text{sortie}}$.
-\item \textbf{Ping-pong} : bascule survenant moins de \SI{5}{s} après la
-      précédente.
-\item \textbf{Taux d'offloading} $O_{Tx}=B_{\text{WiFi,Tx}}/(B_{\text{WiFi,Tx}}+B_{\text{LTE,Tx}})$.
-\item \textbf{Coefficient de variation} du débit reçu, calculé sur des fenêtres d'une seconde.
+
+\item \textbf{Nombre de bascules :}
+\[
+N_{\text{switch}} =
+N_{\text{entrée}} + N_{\text{sortie}}.
+\]
+
+\item \textbf{Ping-pong :} une bascule est considérée comme appartenant
+à un phénomène de ping-pong lorsqu'elle survient moins de
+\SI{5}{s} après la bascule précédente.
+
+\item \textbf{Taux d'offloading :} proportion des octets affectés au
+chemin Wi-Fi parmi les octets affectés aux chemins Wi-Fi et LTE :
+\[
+O_{Tx} =
+\frac{B_{\text{WiFi,Tx}}}
+{B_{\text{WiFi,Tx}}+B_{\text{LTE,Tx}}}.
+\]
+
+\item \textbf{Coefficient de variation (CV) :} indicateur de dispersion
+du débit reçu, calculé sur des fenêtres d'une seconde.
+
 \end{itemize}
 
 \subsection{Résultats}
 
+Le tableau suivant présente les moyennes et les écarts-types calculés
+sur les dix runs de chaque configuration.
+
 \begin{table}[H]
 \centering
-\caption{Effet de l'hystérésis (moyenne $\pm$ écart-type sur 10 runs)}
+\caption{Effet de l'hystérésis sur les performances du mécanisme}
 \label{tab:b5_results}
 \small
 \begin{tabular}{rcccc}
 \toprule
-$H$ (m) & Bascules & Ping-pong & Offloading (\%) & CV du débit\\
+$H$ (m) &
+Bascules &
+Ping-pong &
+Offloading (\%) &
+CV du débit\\
 \midrule
-0 & $59{,}4\pm 6{,}6$ & $58{,}3$ & $51{,}1\pm 3{,}2$  & $0{,}0109$\\
-2 & $27{,}2\pm 2{,}4$ & $24{,}7$ & $51{,}0\pm 5{,}9$  & $0{,}0091$\\
-5 & $4{,}1\pm 1{,}7$  & $1{,}2$  & $40{,}6\pm 22{,}5$ & $0{,}0046$\\
-8 & $0{,}2\pm 0{,}6$  & $0{,}0$  & $8{,}1\pm 25{,}7$  & $0{,}0030$\\
+0 &
+$59{,}4\pm 6{,}6$ &
+$58{,}3\pm 6{,}7$ &
+$51{,}1\pm 3{,}2$ &
+$0{,}01088\pm 0{,}00064$\\
+
+2 &
+$27{,}2\pm 2{,}4$ &
+$24{,}7\pm 3{,}1$ &
+$51{,}0\pm 5{,}9$ &
+$0{,}00914\pm 0{,}00041$\\
+
+5 &
+$4{,}1\pm 1{,}7$ &
+$1{,}2\pm 0{,}9$ &
+$40{,}6\pm 22{,}5$ &
+$0{,}00461\pm 0{,}00059$\\
+
+8 &
+$0{,}2\pm 0{,}6$ &
+$0{,}0\pm 0{,}0$ &
+$8{,}1\pm 25{,}7$ &
+$0{,}00299\pm 0{,}00026$\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Le taux de perte est nul pour toutes les configurations. L'étendue du nombre de
-bascules par run est $[44;68]$ pour $H=0$, $[24;32]$ pour $H=2$, $[2;7]$ pour
-$H=5$ et $[0;2]$ pour $H=8$.
+Les valeurs présentées correspondent à la moyenne et à l'écart-type
+expérimental sur dix réalisations. Le taux d'offloading est exprimé
+en pourcentage, tandis que le CV est sans unité.
+
+Le taux de perte est nul pour toutes les configurations. L'étendue
+du nombre de bascules observé par run est :
+
+\begin{itemize}
+\item $[44;68]$ pour $H=0$ ;
+\item $[24;32]$ pour $H=2$ ;
+\item $[2;7]$ pour $H=5$ ;
+\item $[0;2]$ pour $H=8$.
+\end{itemize}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=.85\textwidth]{img/B/B5_switches.png}
-\caption{Nombre de bascules en fonction de $H$ (moyenne, IC \SI{95}{\percent}).}
+\caption{Nombre moyen de bascules en fonction de $H$ avec
+intervalles de confiance à \SI{95}{\percent}.}
+\label{fig:b5_switches}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=.85\textwidth]{img/B/B5_offloading.png}
-\caption{Taux d'offloading en fonction de $H$.}
+\caption{Taux moyen d'offloading en fonction de la largeur
+d'hystérésis.}
+\label{fig:b5_offloading}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=.85\textwidth]{img/B/B5_boxplot.png}
-\caption{Dispersion du nombre de bascules entre les 10 runs.}
+\caption{Dispersion du nombre de bascules entre les dix runs
+pour chaque valeur de $H$.}
+\label{fig:b5_boxplot}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=.95\textwidth]{img/B/B5_timeline.png}
-\caption{Distance UE--AP et interface active pour le run 1. Les traits verts et
-rouges sont les seuils d'entrée $R-H$ et de sortie $R+H$.}
+\caption{Distance UE--AP et interface active pour le run 1.
+Les seuils d'entrée et de sortie sont représentés respectivement
+par $R-H$ et $R+H$.}
+\label{fig:b5_timeline}
 \end{figure}
 
 \subsection{Analyse}
 
 \paragraph{Réduction des bascules.}
-Le seuil unique ($H=0$) produit en moyenne $59{,}4$ bascules en \SI{80}{s}, presque
-toutes classées ping-pong. Une hystérésis de \SI{2}{m} divise ce nombre par plus
-de 2 (réduction de \SI{54}{\percent}) et $H=5$\,m le réduit de \SI{93}{\percent}.
-Ces écarts dépassent largement la dispersion entre runs (figure
-\ref{fig:placeholder_box} : les étendues des boîtes ne se recouvrent pas).
 
-\paragraph{Compromis stabilité / offloading.}
-La réduction des bascules n'est pas gratuite à partir d'une certaine largeur :
-\begin{itemize}
-\item pour $H=0$ et $H=2$, l'offloading reste de $\approx 51\,\%$ : la
-      stabilité est gagnée sans perte de trafic déchargé ;
-\item pour $H=5$, il tombe à \SI{40,6}{\percent} avec un écart-type de
-      \SI{22,5}{points} ;
-\item pour $H=8$, le seuil d'entrée ($R-H=\SI{42}{m}$) n'est presque jamais
-      franchi par un UE oscillant entre 47 et \SI{53}{m} : l'UE reste sur LTE
-      et l'offloading n'est plus que de \SI{8,1}{\percent}.
-\end{itemize}
-Les écarts-types élevés pour $H=5$ et $H=8$ traduisent un comportement
-bimodal : selon la réalisation du bruit, le seuil d'entrée est franchi ou non.
-Une hystérésis trop large vis-à-vis de la zone de mouvement supprime donc
-l'offloading. Dans ce scénario, $H$ de l'ordre de 2 à \SI{3}{m} est le meilleur
-compromis.
+Sans hystérésis ($H=0$), le mécanisme produit en moyenne
+$59{,}4$ bascules en \SI{80}{s}, dont $58{,}3$ sont classées
+comme ping-pong selon la fenêtre de détection retenue.
+
+L'introduction d'une hystérésis de \SI{2}{m} réduit le nombre moyen
+de bascules à $27{,}2$, soit une diminution d'environ
+\SI{54}{\percent} par rapport au cas sans hystérésis.
+
+Avec $H=\SI{5}{m}$, le nombre moyen de bascules descend à $4{,}1$,
+ce qui représente une réduction d'environ \SI{93}{\percent}.
+
+Enfin, pour $H=\SI{8}{m}$, seulement $0{,}2$ bascule est observée
+en moyenne sur les dix réalisations.
+
+Ces résultats confirment que l'augmentation de la largeur
+d'hystérésis stabilise la décision de sélection du réseau et réduit
+fortement les changements répétés d'interface.
+
+Les étendues observées sur les runs sont également distinctes
+pour $H=0$, $H=2$ et $H=5$. Pour $H=5$ et $H=8$, elles se
+rencontrent à la valeur 2 ; il convient donc de ne pas conclure
+à une séparation absolue de toutes les réalisations.
+
+\paragraph{Compromis entre stabilité et offloading.}
+
+La réduction du nombre de bascules peut s'accompagner d'une
+diminution du trafic affecté au Wi-Fi.
+
+Pour $H=0$ et $H=2$, le taux moyen d'offloading reste proche
+de \SI{51}{\percent}. La stabilité est donc améliorée avec une
+proportion moyenne d'offloading comparable.
+
+Pour $H=5$, le taux moyen diminue à \SI{40,6}{\percent},
+avec un écart-type important de \SI{22,5}{points de pourcentage}.
+Cette dispersion indique que le comportement varie fortement
+d'une réalisation à l'autre.
+
+Pour $H=8$, le taux moyen est de \SI{8,1}{\percent}, avec un
+écart-type de \SI{25,7}{points de pourcentage}.
+
+Dans cette dernière configuration, les seuils sont :
+
+\[
+d_{\text{entrée}} = R-H = 50-8 = \SI{42}{m},
+\]
+
+\[
+d_{\text{sortie}} = R+H = 50+8 = \SI{58}{m}.
+\]
+
+L'UE oscille autour de la frontière du hotspot, approximativement
+entre 47 et \SI{53}{m}. En l'absence de bruit, elle ne franchirait
+donc pas le seuil d'entrée de \SI{42}{m}.
+
+Toutefois, le bruit gaussien de mesure, dont l'écart-type est de
+\SI{2}{m}, peut produire occasionnellement une mesure suffisamment
+faible pour franchir ce seuil. Une telle excursion peut déclencher
+une entrée sur Wi-Fi. Une fois cette entrée réalisée, l'état Wi-Fi
+est conservé tant que le seuil de sortie n'est pas franchi.
+
+Cela permet de comprendre pourquoi neuf runs ne présentent
+aucune bascule, alors que le run 5 en présente deux et atteint
+un taux d'offloading de \SI{81,4}{\percent}.
+
+Ce résultat illustre l'effet de la mémoire de décision introduite
+par l'hystérésis : une excursion ponctuelle du bruit peut modifier
+l'interface active pour une durée plus importante.
+
+Ainsi, une hystérésis trop large par rapport à la zone de mouvement
+de l'UE peut empêcher l'accès au Wi-Fi dans la plupart des
+réalisations. Dans le scénario étudié, une valeur de $H$ comprise
+entre 2 et \SI{3}{m} constitue un compromis intéressant entre
+réduction des bascules et maintien du taux d'offloading.
 
 \paragraph{Stabilité du débit.}
-Le coefficient de variation reste compris entre \SI{0,3}{\percent} et
-\SI{1,1}{\percent}. Il décroît avec $H$, mais cette baisse reflète surtout le
-fait que l'UE change moins d'interface ; sa valeur absolue est de l'ordre de la
-quantification des paquets d'un flux CBR de \SI{2}{Mb/s}. Il n'est donc pas un
-indicateur discriminant dans ce scénario.
+
+Le coefficient de variation du débit reçu diminue globalement
+avec l'augmentation de $H$ :
+
+\begin{itemize}
+\item environ $0{,}01088$ pour $H=0$ ;
+\item environ $0{,}00914$ pour $H=2$ ;
+\item environ $0{,}00461$ pour $H=5$ ;
+\item environ $0{,}00299$ pour $H=8$.
+\end{itemize}
+
+Cette diminution indique une dispersion relative plus faible
+du débit reçu dans les configurations où les changements
+d'interface sont moins fréquents.
+
+Il faut néanmoins interpréter cet indicateur avec prudence :
+la diminution du CV ne signifie pas nécessairement une
+augmentation du débit moyen. Elle indique uniquement une
+plus faible variabilité relative du débit mesuré.
 
 \subsection{Limites}
+
+Les principales limites de cette expérience sont les suivantes :
+
 \begin{itemize}
+
 \item La trajectoire \texttt{border} est périodique et volontairement
-      défavorable ; ce n'est pas un déplacement réaliste.
-\item Seul le bruit de mesure de distance est modélisé ($\sigma_d=\SI{2}{m}$),
-      sans shadowing radio.
-\item Perte et interruption sont nulles : le modèle ne simule ni la
-      ré-association Wi-Fi ni la reconfiguration IP, donc le coût réel d'une
-      bascule est sous-estimé. C'est précisément ce qui rend le ping-pong coûteux
-      en pratique.
-\item Les résultats dépendent du rapport entre $H$, l'amplitude $A$ et $\sigma_d$ ;
-      ils ne sont pas généralisables sans refaire la campagne.
+défavorable. Elle permet d'étudier le comportement du mécanisme
+près de la frontière de couverture, mais ne représente pas
+tous les déplacements réels d'un utilisateur.
+
+\item Seul le bruit de mesure de distance est modélisé,
+avec $\sigma_d=\SI{2}{m}$. Le shadowing radio est désactivé.
+
+\item Les pertes observées sont nulles dans les simulations.
+Le modèle ne représente pas nécessairement tous les coûts
+d'une réassociation Wi-Fi ou d'une reconfiguration IP.
+Les performances mesurées ne doivent donc pas être assimilées
+à celles d'un déploiement réel.
+
+\item Les résultats dépendent du rapport entre la largeur
+d'hystérésis $H$, l'amplitude de mouvement $A$ et l'écart-type
+du bruit de mesure $\sigma_d$. Ils ne peuvent pas être
+généralisés à d'autres scénarios sans campagnes complémentaires.
+
 \end{itemize}
 
 \subsection{Conclusion}
-L'hystérésis réduit fortement le ping-pong : de $59{,}4$ à $27{,}2$ bascules pour
-$H=\SI{2}{m}$ sans perte d'offloading, et à $4{,}1$ pour $H=\SI{5}{m}$ au prix
-d'un offloading réduit à \SI{40,6}{\percent}. Sa largeur doit donc être
-choisie en fonction de la dynamique de l'UE et du bruit de mesure : trop étroite,
-elle est inefficace ; trop large, elle supprime l'offloading.
 
+L'introduction d'une hystérésis réduit fortement le phénomène
+de ping-pong dans le scénario étudié.
 
+Sans hystérésis, le nombre moyen de bascules atteint $59{,}4$.
+Avec une hystérésis de \SI{2}{m}, il descend à $27{,}2$,
+tout en conservant un taux moyen d'offloading proche de
+\SI{51}{\percent}.
 
-\section{Question B6 : Influence du rayon de couverture Wi-Fi et de la vitesse de déplacement sur le taux d'offloading}
+Pour $H=\SI{5}{m}$, le nombre moyen de bascules est réduit
+à $4{,}1$, mais le taux d'offloading diminue à
+\SI{40,6}{\percent}.
+
+Enfin, une hystérésis de \SI{8}{m} stabilise presque totalement
+la décision, mais peut empêcher l'accès au Wi-Fi dans la majorité
+des réalisations.
+
+La largeur de l'hystérésis doit donc être choisie en fonction
+de la dynamique de déplacement de l'UE et du bruit de mesure.
+Une valeur trop faible ne supprime pas suffisamment le ping-pong,
+tandis qu'une valeur trop élevée peut limiter fortement
+l'utilisation du Wi-Fi.
+
+% ============================================================
+% QUESTION B6 : INFLUENCE DU RAYON ET DE LA VITESSE
+% ============================================================
+
+\section{Question B6 : Influence du rayon de couverture Wi-Fi
+et de la vitesse de déplacement sur le taux d'offloading}
 
 \subsection{Objectif de l'expérience}
 
-L'objectif de cette expérience est d'étudier l'influence de deux paramètres sur les performances du mécanisme de Wi-Fi offloading :
+L'objectif de cette expérience est d'étudier l'influence de deux
+paramètres sur les performances du mécanisme de Wi-Fi offloading :
+
 \begin{itemize}
-    \item le rayon de couverture du point d'accès Wi-Fi ;
-    \item la vitesse de déplacement de l'équipement utilisateur (UE).
+\item le rayon de couverture du point d'accès Wi-Fi ;
+\item la vitesse de déplacement de l'équipement utilisateur (UE).
 \end{itemize}
 
-L'idée est de déterminer dans quelle mesure l'augmentation de la zone de couverture Wi-Fi favorise le déchargement du trafic du réseau LTE vers le réseau Wi-Fi, et d'évaluer l'effet de la mobilité de l'utilisateur sur ce mécanisme.
+L'idée est de déterminer dans quelle mesure l'augmentation
+de la zone de couverture Wi-Fi favorise le déchargement du trafic
+du réseau LTE vers le réseau Wi-Fi, et d'évaluer l'effet de la
+mobilité de l'utilisateur sur ce mécanisme.
 
-Conformément à l'énoncé, chaque combinaison de paramètres est exécutée avec au moins cinq graines aléatoires différentes. Les résultats sont ensuite exploités à travers la moyenne et l'écart-type du taux d'offloading.
+Conformément à l'énoncé, chaque combinaison de paramètres est
+exécutée avec au moins cinq graines aléatoires différentes.
+Les résultats sont exploités à travers la moyenne et l'écart-type
+du taux d'offloading.
 
 \subsection{Méthodologie expérimentale}
 
 \paragraph{Paramètres étudiés}
 
-Nous avons réalisé une campagne de simulations en faisant varier le rayon de couverture du point d'accès Wi-Fi et la vitesse de déplacement de l'UE.
+Nous avons réalisé une campagne de simulations en faisant varier
+le rayon de couverture du point d'accès Wi-Fi et la vitesse
+de déplacement de l'UE.
 
 Les paramètres retenus sont présentés dans le tableau suivant :
 
 \begin{table}[H]
-    \centering
-    \caption{Paramètres de la campagne de simulations B6}
-    \label{tab:B6_parameters}
-    \begin{tabular}{ll}
-        \toprule
-        \textbf{Paramètre} & \textbf{Valeurs utilisées} \\
-        \midrule
-        Rayon de couverture Wi-Fi & 40, 50 et 60 m \\
-        Vitesse de déplacement de l'UE & 3, 5 et 7 m/s \\
-        Hystérésis & 5 m \\
-        Durée de simulation & 80 s \\
-        Nombre de graines par combinaison & 5 \\
-        Valeurs des graines aléatoires & 1, 2, 3, 4 et 5 \\
-        Numéro de run & 1 \\
-        Débit applicatif & 2 Mbps \\
-        Fraction de décalage initial & 0,30 \\
-        Écart-type du shadowing & 0 \\
-        Bruit sur la distance & 0 \\
-        \bottomrule
-    \end{tabular}
+\centering
+\caption{Paramètres de la campagne de simulations B6}
+\label{tab:B6_parameters}
+\begin{tabular}{ll}
+\toprule
+\textbf{Paramètre} & \textbf{Valeurs utilisées}\\
+\midrule
+Rayon de couverture Wi-Fi & 40, 50 et 60 m\\
+Vitesse de déplacement de l'UE & 3, 5 et 7 m/s\\
+Hystérésis & 5 m\\
+Durée de simulation & 80 s\\
+Nombre de graines par combinaison & 5\\
+Valeurs des graines aléatoires & 1, 2, 3, 4 et 5\\
+Numéro de run & 1\\
+Débit applicatif & 2 Mbps\\
+Fraction de décalage initial & 0,30\\
+Écart-type du shadowing & 0\\
+Bruit sur la distance & 0\\
+\bottomrule
+\end{tabular}
 \end{table}
 
 Le nombre total de simulations est donc :
@@ -235,33 +435,88 @@ N_{\mathrm{simulations}}
 =
 3 \times 3 \times 5
 =
-45
+45.
 \]
 
-Nous obtenons ainsi neuf combinaisons de paramètres, chacune évaluée sur cinq exécutions.
+Nous obtenons ainsi neuf combinaisons de paramètres,
+chacune évaluée sur cinq exécutions.
 
 \paragraph{Gestion des graines aléatoires}
 
-Afin de prendre en compte la variabilité entre les exécutions, nous avons utilisé le mécanisme de gestion des nombres aléatoires de NS-3, à travers les fonctions :
+Afin de prendre en compte la variabilité entre les exécutions,
+nous avons utilisé le mécanisme de gestion des nombres aléatoires
+de NS-3 à travers les fonctions :
 
 \begin{verbatim}
 RngSeedManager::SetSeed(seed);
 RngSeedManager::SetRun(run);
 \end{verbatim}
 
-Pour chaque combinaison de rayon et de vitesse, les cinq simulations utilisent les graines suivantes :
+Pour chaque combinaison de rayon et de vitesse, les cinq
+simulations utilisent les graines suivantes :
 
 \[
-seed \in \{1,2,3,4,5\}
+seed \in \{1,2,3,4,5\}.
 \]
 
-Le numéro de run est fixé à 1. Cette configuration permet de distinguer les cinq exécutions par leurs graines aléatoires, tout en conservant les mêmes valeurs de paramètres pour une combinaison donnée.
+Le numéro de run est fixé à 1.
+
+Cette configuration permet de distinguer les exécutions à l'aide
+de graines différentes tout en conservant les mêmes paramètres
+pour une combinaison donnée. Les résultats représentent cinq
+réalisations du scénario avec les flux aléatoires associés à ces
+configurations.
+
+\paragraph{Ajustement de la puissance d'émission Wi-Fi}
+
+Un point important de la configuration doit être pris en compte
+dans l'interprétation des résultats : la puissance d'émission
+de l'AP Wi-Fi est ajustée automatiquement en fonction du rayon
+de couverture.
+
+Le code utilise un RSSI cible à la limite du hotspot,
+noté \texttt{edgeRssi}, afin de calculer la puissance d'émission
+nécessaire pour chaque rayon selon le modèle de propagation
+LogDistance.
+
+La relation utilisée est de la forme :
+
+\[
+P_{\mathrm{Tx}}
+=
+P_{\mathrm{edge}}
++
+L_{\mathrm{ref}}
++
+10n\log_{10}\left(\frac{R}{d_{\mathrm{ref}}}\right),
+\]
+
+où :
+
+\begin{itemize}
+\item $P_{\mathrm{edge}}$ représente le RSSI cible à la limite
+du hotspot ;
+\item $L_{\mathrm{ref}}$ est la perte de référence du modèle ;
+\item $n$ est l'exposant de perte de propagation ;
+\item $R$ est le rayon du hotspot ;
+\item $d_{\mathrm{ref}}$ est la distance de référence du modèle.
+\end{itemize}
+
+Ainsi, les simulations ne comparent pas les différents rayons
+à puissance d'émission constante. Elles comparent des zones
+de couverture différentes avec une puissance d'émission adaptée
+à chaque rayon afin de conserver le RSSI cible à la frontière.
+
+Cette hypothèse est importante pour interpréter correctement
+l'influence du rayon sur le taux d'offloading.
 
 \subsection{Métrique d'évaluation : taux d'offloading}
 
-Le taux d'offloading représente la proportion du volume total de données transmis par l'UE qui emprunte l'interface Wi-Fi plutôt que l'interface LTE.
+Le taux d'offloading utilisé dans cette expérience représente
+la proportion des octets affectés au chemin Wi-Fi parmi le
+volume total d'octets affectés aux chemins Wi-Fi et LTE.
 
-Pour chaque simulation, il est calculé à partir du nombre d'octets transmis sur les deux interfaces :
+Il est calculé à partir des compteurs d'émission :
 
 \[
 \boxed{
@@ -272,27 +527,43 @@ O_{\mathrm{Tx}} =
 \]
 
 avec :
+
 \begin{itemize}
-    \item \(B_{\mathrm{WiFi,Tx}}\) : volume de données transmis via l'interface Wi-Fi ;
-    \item \(B_{\mathrm{LTE,Tx}}\) : volume de données transmis via l'interface LTE.
+\item $B_{\mathrm{WiFi,Tx}}$ : volume d'octets affectés au chemin
+Wi-Fi au niveau du socket ;
+\item $B_{\mathrm{LTE,Tx}}$ : volume d'octets affectés au chemin
+LTE au niveau du socket.
 \end{itemize}
 
 Le taux peut également être exprimé en pourcentage :
 
 \[
-O_{\mathrm{Tx}}(\%) = O_{\mathrm{Tx}} \times 100
+O_{\mathrm{Tx}}(\%) = O_{\mathrm{Tx}}\times 100.
 \]
 
-Une valeur élevée signifie qu'une proportion importante du trafic est déchargée vers le réseau Wi-Fi. À l'inverse, une valeur faible indique que la majorité du trafic continue à emprunter le réseau LTE.
+Une valeur élevée signifie qu'une proportion importante du trafic
+applicatif est affectée au chemin Wi-Fi. À l'inverse, une valeur
+faible indique que la majorité du trafic est affectée au chemin LTE.
 
-Il est important de distinguer cette métrique du taux calculé à partir des octets reçus. Dans cette expérience, nous utilisons exclusivement le volume transmis, conformément à la définition demandée dans l'énoncé.
+Il est important de préciser que, dans le code de simulation,
+les compteurs d'octets sont incrémentés avant l'appel à
+\texttt{Send()}. Cette métrique mesure donc le volume de données
+présenté au socket et affecté à chaque chemin selon la décision
+de routage. Elle ne constitue pas, à elle seule, une mesure
+directe du volume effectivement reçu par le serveur via chaque
+interface.
+
+Le code dispose également de compteurs de réception, qui
+permettent de distinguer les octets effectivement reçus par
+le serveur sur Wi-Fi et LTE.
 
 \paragraph{Calcul de la moyenne et de l'écart-type}
 
-Pour chaque combinaison de rayon \(R\) et de vitesse \(V\), nous disposons de cinq valeurs du taux d'offloading :
+Pour chaque combinaison de rayon $R$ et de vitesse $V$,
+nous disposons de cinq valeurs du taux d'offloading :
 
 \[
-O_1,O_2,O_3,O_4,O_5
+O_1,O_2,O_3,O_4,O_5.
 \]
 
 La moyenne est calculée par :
@@ -304,11 +575,12 @@ La moyenne est calculée par :
 }
 \]
 
-L'écart-type expérimental, calculé avec la correction de Bessel, est donné par :
+L'écart-type expérimental, calculé avec la correction de Bessel,
+est donné par :
 
 \[
 \boxed{
-\sigma_O =
+s_O =
 \sqrt{
 \frac{1}{5-1}
 \sum_{i=1}^{5}
@@ -317,49 +589,62 @@ L'écart-type expérimental, calculé avec la correction de Bessel, est donné p
 }
 \]
 
-La moyenne représente le comportement moyen du mécanisme d'offloading, tandis que l'écart-type mesure la dispersion des résultats entre les différentes graines.
+La moyenne représente le comportement moyen du mécanisme
+d'offloading, tandis que l'écart-type mesure la dispersion
+des résultats entre les cinq exécutions.
 
-Dans les tableaux et les figures qui suivent, la moyenne est exprimée en pourcentage et l'écart-type en points de pourcentage (pp).
+Dans les tableaux et les figures qui suivent, la moyenne
+est exprimée en pourcentage et l'écart-type en points
+de pourcentage (pp).
 
 \subsection{Résultats expérimentaux}
 
-Après l'exécution des 45 simulations, les résultats ont été regroupés selon le rayon de couverture Wi-Fi et la vitesse de déplacement de l'UE.
+Après l'exécution des 45 simulations, les résultats ont été
+regroupés selon le rayon de couverture Wi-Fi et la vitesse
+de déplacement de l'UE.
 
-Le tableau suivant présente le taux moyen d'offloading ainsi que son écart-type pour chacune des neuf combinaisons.
+Le tableau suivant présente le taux moyen d'offloading ainsi
+que son écart-type pour chacune des neuf combinaisons.
 
 \begin{table}[H]
-    \centering
-    \caption{Moyenne et écart-type du taux d'offloading pour chaque combinaison}
-    \label{tab:B6_results}
-    \small
-    \begin{tabular}{ccc}
-        \toprule
-        \textbf{Rayon Wi-Fi (m)} &
-        \textbf{Vitesse (m/s)} &
-        \textbf{Offloading moyen $\pm$ écart-type (pp)} \\
-        \midrule
-        40 & 3 & \(33{,}7132 \pm 0{,}3505\) \\
-        40 & 5 & \(19{,}8708 \pm 0{,}0000\) \\
-        40 & 7 & \(14{,}1046 \pm 0{,}0000\) \\
-        \midrule
-        50 & 3 & \(42{,}0505 \pm 0{,}5752\) \\
-        50 & 5 & \(24{,}9969 \pm 0{,}0000\) \\
-        50 & 7 & \(17{,}9508 \pm 0{,}0000\) \\
-        \midrule
-        60 & 3 & \(50{,}6437 \pm 0{,}6431\) \\
-        60 & 5 & \(30{,}1292 \pm 0{,}0000\) \\
-        60 & 7 & \(21{,}7969 \pm 0{,}0000\) \\
-        \bottomrule
-    \end{tabular}
+\centering
+\caption{Moyenne et écart-type du taux d'offloading pour
+chaque combinaison}
+\label{tab:B6_results}
+\small
+\begin{tabular}{ccc}
+\toprule
+\textbf{Rayon Wi-Fi (m)} &
+\textbf{Vitesse (m/s)} &
+\textbf{Offloading moyen $\pm$ écart-type (pp)}\\
+\midrule
+40 & 3 & \(33{,}7132 \pm 0{,}3505\)\\
+40 & 5 & \(19{,}8708 \pm 0{,}0000\)\\
+40 & 7 & \(14{,}1046 \pm 0{,}0000\)\\
+\midrule
+50 & 3 & \(42{,}0505 \pm 0{,}5752\)\\
+50 & 5 & \(24{,}9969 \pm 0{,}0000\)\\
+50 & 7 & \(17{,}9508 \pm 0{,}0000\)\\
+\midrule
+60 & 3 & \(50{,}6437 \pm 0{,}6431\)\\
+60 & 5 & \(30{,}1292 \pm 0{,}0000\)\\
+60 & 7 & \(21{,}7969 \pm 0{,}0000\)\\
+\bottomrule
+\end{tabular}
 \end{table}
 
 \paragraph{Analyse de l'influence du rayon de couverture}
 
-Pour étudier l'effet du rayon Wi-Fi, nous comparons les taux d'offloading obtenus pour une même vitesse de déplacement.
+Pour étudier l'effet du rayon Wi-Fi, nous comparons les taux
+d'offloading obtenus pour une même vitesse de déplacement.
 
-Les résultats montrent une augmentation systématique du taux d'offloading lorsque le rayon de couverture du point d'accès Wi-Fi augmente.
+Les résultats montrent une augmentation systématique du taux
+d'offloading lorsque le rayon de couverture du point d'accès
+Wi-Fi augmente.
 
-Pour une vitesse de 3 m/s, le taux moyen passe de \(33{,}71\,\%\) avec un rayon de 40 m à \(50{,}64\,\%\) avec un rayon de 60 m.
+Pour une vitesse de \SI{3}{m/s}, le taux moyen passe de
+\SI{33,7132}{\percent} avec un rayon de \SI{40}{m} à
+\SI{50,6437}{\percent} avec un rayon de \SI{60}{m}.
 
 Cela représente une augmentation de :
 
@@ -372,36 +657,58 @@ Cela représente une augmentation de :
 \[
 \boxed{
 \Delta O_{R,\,V=3}
-\approx 16{,}93 \text{ points}
+\approx 16{,}93 \text{ points de pourcentage}
 }
 \]
 
 La même tendance est observée pour les deux autres vitesses :
+
 \begin{itemize}
-    \item À 5 m/s, le taux passe de \(19{,}87\,\%\) à \(30{,}13\,\%\), soit une augmentation d'environ 10,26 points.
-    \item À 7 m/s, il passe de \(14{,}10\,\%\) à \(21{,}80\,\%\), soit une augmentation d'environ 7,69 points.
+\item À \SI{5}{m/s}, le taux passe de \SI{19,87}{\percent}
+à \SI{30,13}{\percent}, soit une augmentation d'environ
+10,26 points.
+
+\item À \SI{7}{m/s}, il passe de \SI{14,10}{\percent}
+à \SI{21,80}{\percent}, soit une augmentation d'environ
+7,69 points.
 \end{itemize}
 
-Cette évolution s'explique par l'augmentation de la zone géographique dans laquelle l'UE peut utiliser le réseau Wi-Fi.
+Cette évolution s'explique par l'augmentation de la zone
+géographique dans laquelle l'UE peut utiliser le réseau Wi-Fi.
+Lorsque le rayon augmente, l'UE peut entrer plus tôt dans la zone
+d'offloading et y rester plus longtemps avant de revenir vers
+le réseau LTE.
 
-En effet, lorsque le rayon de couverture augmente, l'UE peut entrer plus tôt dans la zone d'offloading et y rester plus longtemps avant de revenir vers le réseau LTE. Le volume de données transmis par Wi-Fi augmente donc par rapport au volume total transmis.
+Il faut toutefois rappeler que la puissance d'émission de l'AP
+est également ajustée en fonction du rayon dans cette campagne.
+L'évolution observée correspond donc à l'effet combiné de
+l'augmentation du rayon et de l'adaptation de la puissance
+d'émission selon le modèle retenu.
 
 \begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{img/B/B6_offloading_vs_radius.png}
-    \caption{Évolution du taux moyen d'offloading en fonction du rayon Wi-Fi pour différentes vitesses}
-    \label{fig:B6_radius}
+\centering
+\includegraphics[width=0.85\textwidth]
+{img/B/B6_offloading_vs_radius.png}
+\caption{Évolution du taux moyen d'offloading en fonction
+du rayon Wi-Fi pour différentes vitesses}
+\label{fig:B6_radius}
 \end{figure}
 
-La figure~\ref{fig:B6_radius} confirme cette tendance : pour chaque vitesse, l'augmentation du rayon de couverture entraîne une hausse du taux moyen d'offloading.
+La figure~\ref{fig:B6_radius} confirme cette tendance :
+pour chaque vitesse, l'augmentation du rayon de couverture
+entraîne une hausse du taux moyen d'offloading.
 
 \paragraph{Analyse de l'influence de la vitesse de déplacement}
 
-Nous étudions maintenant l'effet de la vitesse de l'UE en conservant le même rayon de couverture Wi-Fi.
+Nous étudions maintenant l'effet de la vitesse de l'UE en
+conservant le même rayon de couverture Wi-Fi.
 
-Les résultats montrent une diminution du taux d'offloading lorsque la vitesse de déplacement augmente.
+Les résultats montrent une diminution du taux d'offloading
+lorsque la vitesse de déplacement augmente.
 
-Par exemple, pour un rayon de 60 m, le taux moyen passe de \(50{,}64\,\%\) à 3 m/s à \(21{,}80\,\%\) à 7 m/s.
+Par exemple, pour un rayon de \SI{60}{m}, le taux moyen passe
+de \SI{50,64}{\percent} à \SI{3}{m/s} à
+\SI{21,80}{\percent} à \SI{7}{m/s}.
 
 La diminution correspondante est :
 
@@ -414,125 +721,237 @@ La diminution correspondante est :
 \[
 \boxed{
 \Delta O_{V,\,R=60}
-\approx -28{,}85 \text{ points}
+\approx -28{,}85 \text{ points de pourcentage}
 }
 \]
 
-Cette tendance est également observée pour les rayons de 40 m et de 50 m.
+Cette tendance est également observée pour les rayons de
+\SI{40}{m} et \SI{50}{m}.
 
-L'explication repose principalement sur la durée de présence de l'UE dans la zone de couverture Wi-Fi.
+L'explication repose principalement sur la durée de présence
+de l'UE dans la zone de couverture Wi-Fi.
 
-À rayon constant, une vitesse plus élevée entraîne un passage plus rapide dans le hotspot. L'UE dispose donc de moins de temps pour transmettre ses données via le Wi-Fi. Une part plus importante du trafic est alors acheminée par l'interface LTE, ce qui réduit le taux d'offloading global.
+À rayon constant, une vitesse plus élevée entraîne un passage
+plus rapide dans le hotspot. L'UE dispose donc de moins de temps
+pour transmettre ses données via le Wi-Fi. Une part plus
+importante du trafic est alors affectée au chemin LTE, ce qui
+réduit le taux d'offloading global.
 
 \begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{img/B/B6_offloading_vs_speed.png}
-    \caption{Évolution du taux moyen d'offloading en fonction de la vitesse de déplacement pour différents rayons}
-    \label{fig:B6_speed}
+\centering
+\includegraphics[width=0.85\textwidth]
+{img/B/B6_offloading_vs_speed.png}
+\caption{Évolution du taux moyen d'offloading en fonction
+de la vitesse de déplacement pour différents rayons}
+\label{fig:B6_speed}
 \end{figure}
 
-La figure~\ref{fig:B6_speed} met en évidence la relation inverse entre la vitesse de déplacement et le taux d'offloading : plus l'UE se déplace rapidement, moins le trafic est déchargé vers le Wi-Fi.
+La figure~\ref{fig:B6_speed} met en évidence la relation
+inverse entre la vitesse de déplacement et le taux
+d'offloading : plus l'UE se déplace rapidement, moins le trafic
+est affecté au chemin Wi-Fi.
 
 \paragraph{Analyse globale des moyennes}
 
-Afin d'observer simultanément l'influence des deux paramètres, nous représentons les moyennes obtenues sous forme d'une carte thermique.
+Afin d'observer simultanément l'influence des deux paramètres,
+nous représentons les moyennes obtenues sous forme d'une
+carte thermique.
 
 \begin{figure}[H]
-    \centering
-    \includegraphics[width=0.78\textwidth]{img/B/B6_heatmap_mean.png}
-    \caption{Carte thermique du taux moyen d'offloading selon le rayon Wi-Fi et la vitesse de déplacement}
-    \label{fig:B6_heatmap_mean}
+\centering
+\includegraphics[width=0.78\textwidth]
+{img/B/B6_heatmap_mean.png}
+\caption{Carte thermique du taux moyen d'offloading selon
+le rayon Wi-Fi et la vitesse de déplacement}
+\label{fig:B6_heatmap_mean}
 \end{figure}
 
-La figure~\ref{fig:B6_heatmap_mean} permet de dégager deux tendances principales :
+La figure~\ref{fig:B6_heatmap_mean} permet de dégager
+deux tendances principales :
+
 \begin{itemize}
-    \item Les valeurs les plus élevées sont obtenues pour un rayon de 60 m et une vitesse de 3 m/s.
-    \item Les valeurs les plus faibles sont observées pour un rayon de 40 m et une vitesse de 7 m/s.
+\item Les valeurs les plus élevées sont obtenues pour un
+rayon de \SI{60}{m} et une vitesse de \SI{3}{m/s}.
+
+\item Les valeurs les plus faibles sont observées pour un
+rayon de \SI{40}{m} et une vitesse de \SI{7}{m/s}.
 \end{itemize}
 
-La combinaison d'une grande couverture Wi-Fi et d'une faible vitesse de déplacement est donc la configuration la plus favorable à l'offloading dans le scénario étudié.
+La combinaison d'une grande couverture Wi-Fi et d'une faible
+vitesse de déplacement est donc la configuration la plus
+favorable à l'offloading parmi celles testées.
 
 \subsection{Analyse de la variabilité entre les graines aléatoires}
 
-L'énoncé demande également d'étudier l'amplitude de la variabilité observée entre les graines aléatoires et de la comparer à l'effet des paramètres étudiés.
+L'énoncé demande également d'étudier l'amplitude de la variabilité
+observée entre les graines aléatoires et de la comparer à
+l'effet des paramètres étudiés.
 
-Pour cela, nous analysons les écarts-types reportés dans le tableau~\ref{tab:B6_results}.
+Pour cela, nous analysons les écarts-types reportés dans
+le tableau~\ref{tab:B6_results}.
 
 \paragraph{Interprétation des écarts-types}
 
-Pour les configurations à 3 m/s, les écarts-types obtenus sont :
+Pour les configurations à \SI{3}{m/s}, les écarts-types obtenus
+sont :
+
 \begin{itemize}
-    \item \(0{,}3505\) point pour un rayon de 40 m ;
-    \item \(0{,}5752\) point pour un rayon de 50 m ;
-    \item \(0{,}6431\) point pour un rayon de 60 m.
+\item $0{,}3505$ point pour un rayon de \SI{40}{m} ;
+\item $0{,}5752$ point pour un rayon de \SI{50}{m} ;
+\item $0{,}6431$ point pour un rayon de \SI{60}{m}.
 \end{itemize}
 
-Ces valeurs indiquent une faible dispersion des taux d'offloading entre les cinq graines utilisées.
+Ces valeurs indiquent une faible dispersion des taux
+d'offloading entre les cinq exécutions.
 
-Pour les vitesses de 5 et 7 m/s, les écarts-types sont nuls à la précision affichée. Cela signifie que les cinq exécutions correspondantes ont produit les mêmes volumes transmis sur les interfaces Wi-Fi et LTE, et donc le même taux d'offloading.
+Pour les vitesses de \SI{5}{m/s} et \SI{7}{m/s}, les
+écarts-types sont nuls à la précision affichée. Cela signifie
+que les cinq exécutions correspondantes ont produit les mêmes
+volumes comptabilisés sur les chemins Wi-Fi et LTE, et donc
+le même taux d'offloading.
 
-Il ne s'agit pas d'une erreur de calcul statistique. La vérification des fichiers de résultats montre que les valeurs de \(B_{\mathrm{WiFi,Tx}}\) et de \(B_{\mathrm{LTE,Tx}}\) sont identiques entre les cinq exécutions pour ces configurations.
+Il ne s'agit pas d'une erreur de calcul statistique.
+La configuration de cette campagne désactive le shadowing
+et le bruit de mesure de distance. Les différences de
+décalage latéral initial ne conduisent donc pas nécessairement
+à une modification du nombre d'octets affectés à chaque chemin.
 
-Il faut toutefois interpréter ce résultat avec prudence : un écart-type nul signifie uniquement qu'aucune variation n'a été observée dans les métriques mesurées pour ces cinq exécutions. Il ne démontre pas que le mécanisme est intrinsèquement dépourvu de variabilité.
+Il faut toutefois interpréter ce résultat avec prudence :
+un écart-type nul signifie uniquement qu'aucune variation
+n'a été observée dans la métrique mesurée pour ces cinq
+exécutions. Il ne démontre pas que le mécanisme est
+intrinsèquement dépourvu de variabilité.
 
 \begin{figure}[H]
-    \centering
-    \includegraphics[width=0.78\textwidth]{img/B/B6_heatmap_std.png}
-    \caption{Carte thermique de l'écart-type du taux d'offloading entre les cinq graines}
-    \label{fig:B6_heatmap_std}
+\centering
+\includegraphics[width=0.78\textwidth]
+{img/B/B6_heatmap_std.png}
+\caption{Carte thermique de l'écart-type du taux d'offloading
+entre les cinq graines}
+\label{fig:B6_heatmap_std}
 \end{figure}
 
-La figure~\ref{fig:B6_heatmap_std} confirme que la dispersion observée est faible et qu'elle est principalement visible pour les configurations à 3 m/s.
+La figure~\ref{fig:B6_heatmap_std} confirme que la dispersion
+observée est faible et qu'elle est principalement visible
+pour les configurations à \SI{3}{m/s}.
 
 \paragraph{Comparaison entre variabilité et effet des paramètres}
 
-Les variations provoquées par le changement du rayon et de la vitesse sont nettement supérieures aux dispersions mesurées entre les graines.
+Les variations provoquées par le changement du rayon et de
+la vitesse sont nettement supérieures aux dispersions mesurées
+entre les graines.
 
-Par exemple, à 3 m/s, l'augmentation du rayon de 40 à 60 m entraîne une hausse de l'offloading d'environ 16,93 points, alors que les écarts-types restent inférieurs à 0,65 point.
+Par exemple, à \SI{3}{m/s}, l'augmentation du rayon de
+\SI{40}{m} à \SI{60}{m} entraîne une hausse de l'offloading
+d'environ 16,93 points, alors que les écarts-types restent
+inférieurs à 0,65 point.
 
-De même, à un rayon de 60 m, le passage de 3 à 7 m/s entraîne une diminution d'environ 28,85 points.
+De même, à un rayon de \SI{60}{m}, le passage de
+\SI{3}{m/s} à \SI{7}{m/s} entraîne une diminution
+d'environ 28,85 points.
 
-Ces différences montrent que, dans le scénario simulé, l'effet du rayon de couverture et de la vitesse de déplacement est beaucoup plus important que la variabilité observée entre les cinq graines.
+Ces différences montrent que, dans le scénario simulé,
+l'effet des paramètres géométriques et de mobilité est
+beaucoup plus important que la variabilité observée entre
+les cinq graines.
 
 \begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{img/B/B6_seed_dispersion.png}
-    \caption{Dispersion du taux d'offloading pour les différentes graines aléatoires}
-    \label{fig:B6_seed_dispersion}
+\centering
+\includegraphics[width=0.85\textwidth]
+{img/B/B6_seed_dispersion.png}
+\caption{Dispersion du taux d'offloading pour les différentes
+graines aléatoires}
+\label{fig:B6_seed_dispersion}
 \end{figure}
 
 \subsection{Discussion des résultats et limites expérimentales}
 
-Les résultats obtenus sont cohérents avec le comportement attendu d'un mécanisme d'offloading fondé sur la couverture Wi-Fi et la mobilité de l'UE.
+Les résultats obtenus sont cohérents avec le comportement
+attendu d'un mécanisme d'offloading fondé sur la couverture
+Wi-Fi et la mobilité de l'UE.
 
-L'augmentation du rayon du hotspot favorise l'utilisation du Wi-Fi, car elle augmente la durée pendant laquelle l'UE peut transmettre des données via cette interface.
+L'augmentation du rayon du hotspot favorise l'utilisation
+du Wi-Fi, car elle augmente la durée pendant laquelle l'UE
+peut transmettre des données via cette interface.
 
-À l'inverse, l'augmentation de la vitesse réduit le temps de présence dans la zone de couverture et diminue ainsi le volume de données transmis par Wi-Fi.
+À l'inverse, l'augmentation de la vitesse réduit le temps
+de présence dans la zone de couverture et diminue ainsi
+la proportion du trafic affectée au chemin Wi-Fi.
 
-Il convient néanmoins de préciser certaines limites du modèle utilisé.
+Il convient néanmoins de préciser certaines limites du
+modèle utilisé.
 
-Premièrement, le shadowing a été désactivé (\(\text{shadowSigma}=0\)) et aucun bruit n'a été ajouté à la mesure de distance (\(\text{distNoise}=0\)). Le scénario ne prend donc pas en compte les fluctuations de puissance reçue provoquées par les obstacles ou les variations aléatoires du canal radio.
+Premièrement, le shadowing a été désactivé
+(\texttt{shadowSigma=0}) et aucun bruit n'a été ajouté
+à la mesure de distance (\texttt{distNoise=0}).
+Le scénario ne prend donc pas en compte les fluctuations
+de puissance reçue provoquées par les obstacles ou les
+variations aléatoires du canal radio.
 
-Deuxièmement, même si les graines aléatoires sont différentes et que le décalage initial varie entre les exécutions, les résultats montrent que certaines configurations produisent exactement les mêmes volumes transmis. La variabilité observée dépend donc du scénario géométrique, de la vitesse et du fonctionnement discret de la logique de bascule.
+Deuxièmement, la puissance d'émission de l'AP est ajustée
+automatiquement selon le rayon afin de maintenir un RSSI
+cible à la limite du hotspot. Les résultats ne correspondent
+donc pas à une comparaison des rayons à puissance d'émission
+constante.
 
-Par conséquent, les écarts-types nuls ne doivent pas être généralisés à des environnements radio plus réalistes. L'introduction d'un modèle de propagation avec shadowing ou fading pourrait faire apparaître une variabilité supplémentaire.
+Troisièmement, le taux $O_{\mathrm{Tx}}$ mesure les octets
+affectés à chaque chemin au niveau du socket. Il ne doit
+pas être confondu avec le volume de données effectivement
+reçu par le serveur sur chaque interface. Les compteurs
+de réception constituent une métrique complémentaire
+permettant d'évaluer le trafic effectivement livré.
 
-Ces limites n'invalident pas les résultats obtenus : elles définissent le cadre dans lequel les conclusions de cette expérience sont applicables.
+Enfin, même si les graines aléatoires sont différentes
+et que le décalage initial varie entre les exécutions,
+les résultats montrent que certaines configurations
+produisent exactement les mêmes volumes comptabilisés.
+La variabilité observée dépend donc du scénario géométrique,
+de la vitesse et du fonctionnement discret de la logique
+de bascule.
+
+Ces limites n'invalident pas les résultats obtenus :
+elles définissent le cadre dans lequel les conclusions
+de cette expérience sont applicables.
 
 \subsection{Conclusion de la question B6}
 
-Cette expérience a permis de quantifier l'influence du rayon de couverture Wi-Fi et de la vitesse de déplacement de l'UE sur le taux d'offloading.
+Cette expérience a permis de quantifier l'influence du
+rayon de couverture Wi-Fi et de la vitesse de déplacement
+de l'UE sur le taux d'offloading.
 
-Les 45 simulations réalisées, réparties sur neuf combinaisons de paramètres et cinq graines aléatoires par combinaison, mettent en évidence les conclusions suivantes :
+Les 45 simulations réalisées, réparties sur neuf combinaisons
+de paramètres et cinq graines aléatoires par combinaison,
+mettent en évidence les conclusions suivantes :
 
 \begin{itemize}
-    \item L'augmentation du rayon de couverture Wi-Fi améliore le taux d'offloading, car elle augmente la durée de disponibilité du hotspot pour l'UE.
-    \item L'augmentation de la vitesse de déplacement réduit le taux d'offloading, car l'UE traverse plus rapidement la zone de couverture Wi-Fi.
-    \item La variabilité entre les graines est faible dans le scénario étudié et reste nettement inférieure aux variations provoquées par les changements de rayon et de vitesse.
+
+\item L'augmentation du rayon de couverture Wi-Fi améliore
+le taux d'offloading observé dans le scénario étudié.
+
+\item L'augmentation de la vitesse de déplacement réduit
+le taux d'offloading, car l'UE traverse plus rapidement
+la zone de couverture Wi-Fi.
+
+\item La variabilité entre les graines est faible dans
+le scénario étudié et reste nettement inférieure aux
+variations provoquées par les changements de rayon et
+de vitesse.
+
 \end{itemize}
 
-La meilleure configuration parmi celles testées est obtenue avec un rayon Wi-Fi de 60 m et une vitesse de 3 m/s, pour laquelle le taux moyen d'offloading atteint environ \(50{,}64\,\%\).
+La meilleure configuration parmi celles testées est obtenue
+avec un rayon Wi-Fi de \SI{60}{m} et une vitesse de
+\SI{3}{m/s}, pour laquelle le taux moyen d'offloading
+atteint environ \SI{50,64}{\percent}.
 
-À l'inverse, la configuration avec un rayon de 40 m et une vitesse de 7 m/s donne le taux le plus faible, soit environ \(14{,}10\,\%\).
+À l'inverse, la configuration avec un rayon de \SI{40}{m}
+et une vitesse de \SI{7}{m/s} donne le taux le plus faible,
+soit environ \SI{14,10}{\percent}.
 
-On peut donc conclure que l'efficacité du Wi-Fi offloading dépend fortement de la dimension de la zone de couverture et de la mobilité de l'utilisateur. Une couverture Wi-Fi plus étendue et une vitesse de déplacement plus faible favorisent le déchargement du trafic LTE vers le réseau Wi-Fi dans le scénario considéré.
+On peut donc conclure que l'efficacité du Wi-Fi offloading
+dépend fortement de la dimension de la zone de couverture
+et de la mobilité de l'utilisateur. Une couverture Wi-Fi
+plus étendue et une vitesse de déplacement plus faible
+favorisent le déchargement du trafic LTE vers le réseau
+Wi-Fi dans le scénario considéré, avec une puissance
+d'émission adaptée au rayon de couverture.
