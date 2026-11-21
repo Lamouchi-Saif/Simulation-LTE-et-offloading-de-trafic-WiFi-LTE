@@ -465,3 +465,365 @@ mais limité.
 % ============================================================
 % FIN DE LA QUESTION B5
 % ============================================================
+
+
+
+\section{Question B6 : Influence du rayon de couverture Wi-Fi et de la vitesse de déplacement sur le taux d'offloading}
+
+\subsection{Objectif de l'expérience}
+
+L'objectif de cette expérience est d'étudier l'influence de deux paramètres sur les performances du mécanisme de Wi-Fi offloading :
+\begin{itemize}
+    \item le rayon de couverture du point d'accès Wi-Fi ;
+    \item la vitesse de déplacement de l'équipement utilisateur (UE).
+\end{itemize}
+
+L'idée est de déterminer dans quelle mesure l'augmentation de la zone de couverture Wi-Fi favorise le déchargement du trafic du réseau LTE vers le réseau Wi-Fi, et d'évaluer l'effet de la mobilité de l'utilisateur sur ce mécanisme.
+
+Conformément à l'énoncé, chaque combinaison de paramètres est exécutée avec au moins cinq graines aléatoires différentes. Les résultats sont ensuite exploités à travers la moyenne et l'écart-type du taux d'offloading.
+
+\subsection{Méthodologie expérimentale}
+
+\paragraph{Paramètres étudiés}
+
+Nous avons réalisé une campagne de simulations en faisant varier le rayon de couverture du point d'accès Wi-Fi et la vitesse de déplacement de l'UE.
+
+Les paramètres retenus sont présentés dans le tableau suivant :
+
+\begin{table}[H]
+    \centering
+    \caption{Paramètres de la campagne de simulations B6}
+    \label{tab:B6_parameters}
+    \begin{tabular}{ll}
+        \toprule
+        \textbf{Paramètre} & \textbf{Valeurs utilisées} \\
+        \midrule
+        Rayon de couverture Wi-Fi & 40, 50 et 60 m \\
+        Vitesse de déplacement de l'UE & 3, 5 et 7 m/s \\
+        Hystérésis & 5 m \\
+        Durée de simulation & 80 s \\
+        Nombre de graines par combinaison & 5 \\
+        Valeurs des graines aléatoires & 1, 2, 3, 4 et 5 \\
+        Numéro de run & 1 \\
+        Débit applicatif & 2 Mbps \\
+        Fraction de décalage initial & 0,30 \\
+        Écart-type du shadowing & 0 \\
+        Bruit sur la distance & 0 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Le nombre total de simulations est donc :
+
+\[
+N_{\mathrm{simulations}}
+=
+N_R \times N_V \times N_{\mathrm{graines}}
+\]
+
+\[
+N_{\mathrm{simulations}}
+=
+3 \times 3 \times 5
+=
+45
+\]
+
+Nous obtenons ainsi neuf combinaisons de paramètres, chacune évaluée sur cinq exécutions.
+
+\paragraph{Gestion des graines aléatoires}
+
+Afin de prendre en compte la variabilité entre les exécutions, nous avons utilisé le mécanisme de gestion des nombres aléatoires de NS-3, à travers les fonctions :
+
+\begin{verbatim}
+RngSeedManager::SetSeed(seed);
+RngSeedManager::SetRun(run);
+\end{verbatim}
+
+Pour chaque combinaison de rayon et de vitesse, les cinq simulations utilisent les graines suivantes :
+
+\[
+seed \in \{1,2,3,4,5\}
+\]
+
+Le numéro de run est fixé à 1. Cette configuration permet de distinguer les cinq exécutions par leurs graines aléatoires, tout en conservant les mêmes valeurs de paramètres pour une combinaison donnée.
+
+\subsection{Métrique d'évaluation : taux d'offloading}
+
+Le taux d'offloading représente la proportion du volume total de données transmis par l'UE qui emprunte l'interface Wi-Fi plutôt que l'interface LTE.
+
+Pour chaque simulation, il est calculé à partir du nombre d'octets transmis sur les deux interfaces :
+
+\[
+\boxed{
+O_{\mathrm{Tx}} =
+\frac{B_{\mathrm{WiFi,Tx}}}
+{B_{\mathrm{WiFi,Tx}}+B_{\mathrm{LTE,Tx}}}
+}
+\]
+
+avec :
+\begin{itemize}
+    \item \(B_{\mathrm{WiFi,Tx}}\) : volume de données transmis via l'interface Wi-Fi ;
+    \item \(B_{\mathrm{LTE,Tx}}\) : volume de données transmis via l'interface LTE.
+\end{itemize}
+
+Le taux peut également être exprimé en pourcentage :
+
+\[
+O_{\mathrm{Tx}}(\%) = O_{\mathrm{Tx}} \times 100
+\]
+
+Une valeur élevée signifie qu'une proportion importante du trafic est déchargée vers le réseau Wi-Fi. À l'inverse, une valeur faible indique que la majorité du trafic continue à emprunter le réseau LTE.
+
+Il est important de distinguer cette métrique du taux calculé à partir des octets reçus. Dans cette expérience, nous utilisons exclusivement le volume transmis, conformément à la définition demandée dans l'énoncé.
+
+\paragraph{Calcul de la moyenne et de l'écart-type}
+
+Pour chaque combinaison de rayon \(R\) et de vitesse \(V\), nous disposons de cinq valeurs du taux d'offloading :
+
+\[
+O_1,O_2,O_3,O_4,O_5
+\]
+
+La moyenne est calculée par :
+
+\[
+\boxed{
+\overline{O} =
+\frac{1}{5}\sum_{i=1}^{5} O_i
+}
+\]
+
+L'écart-type expérimental, calculé avec la correction de Bessel, est donné par :
+
+\[
+\boxed{
+\sigma_O =
+\sqrt{
+\frac{1}{5-1}
+\sum_{i=1}^{5}
+(O_i-\overline{O})^2
+}
+}
+\]
+
+La moyenne représente le comportement moyen du mécanisme d'offloading, tandis que l'écart-type mesure la dispersion des résultats entre les différentes graines.
+
+Dans les tableaux et les figures qui suivent, la moyenne est exprimée en pourcentage et l'écart-type en points de pourcentage (pp).
+
+\subsection{Résultats expérimentaux}
+
+Après l'exécution des 45 simulations, les résultats ont été regroupés selon le rayon de couverture Wi-Fi et la vitesse de déplacement de l'UE.
+
+Le tableau suivant présente le taux moyen d'offloading ainsi que son écart-type pour chacune des neuf combinaisons.
+
+\begin{table}[H]
+    \centering
+    \caption{Moyenne et écart-type du taux d'offloading pour chaque combinaison}
+    \label{tab:B6_results}
+    \small
+    \begin{tabular}{ccc}
+        \toprule
+        \textbf{Rayon Wi-Fi (m)} &
+        \textbf{Vitesse (m/s)} &
+        \textbf{Offloading moyen $\pm$ écart-type (pp)} \\
+        \midrule
+        40 & 3 & \(33{,}7132 \pm 0{,}3505\) \\
+        40 & 5 & \(19{,}8708 \pm 0{,}0000\) \\
+        40 & 7 & \(14{,}1046 \pm 0{,}0000\) \\
+        \midrule
+        50 & 3 & \(42{,}0505 \pm 0{,}5752\) \\
+        50 & 5 & \(24{,}9969 \pm 0{,}0000\) \\
+        50 & 7 & \(17{,}9508 \pm 0{,}0000\) \\
+        \midrule
+        60 & 3 & \(50{,}6437 \pm 0{,}6431\) \\
+        60 & 5 & \(30{,}1292 \pm 0{,}0000\) \\
+        60 & 7 & \(21{,}7969 \pm 0{,}0000\) \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\paragraph{Analyse de l'influence du rayon de couverture}
+
+Pour étudier l'effet du rayon Wi-Fi, nous comparons les taux d'offloading obtenus pour une même vitesse de déplacement.
+
+Les résultats montrent une augmentation systématique du taux d'offloading lorsque le rayon de couverture du point d'accès Wi-Fi augmente.
+
+Pour une vitesse de 3 m/s, le taux moyen passe de \(33{,}71\,\%\) avec un rayon de 40 m à \(50{,}64\,\%\) avec un rayon de 60 m.
+
+Cela représente une augmentation de :
+
+\[
+\Delta O_{R,\,V=3}
+=
+50{,}6437 - 33{,}7132
+\]
+
+\[
+\boxed{
+\Delta O_{R,\,V=3}
+\approx 16{,}93 \text{ points}
+}
+\]
+
+La même tendance est observée pour les deux autres vitesses :
+\begin{itemize}
+    \item À 5 m/s, le taux passe de \(19{,}87\,\%\) à \(30{,}13\,\%\), soit une augmentation d'environ 10,26 points.
+    \item À 7 m/s, il passe de \(14{,}10\,\%\) à \(21{,}80\,\%\), soit une augmentation d'environ 7,69 points.
+\end{itemize}
+
+Cette évolution s'explique par l'augmentation de la zone géographique dans laquelle l'UE peut utiliser le réseau Wi-Fi.
+
+En effet, lorsque le rayon de couverture augmente, l'UE peut entrer plus tôt dans la zone d'offloading et y rester plus longtemps avant de revenir vers le réseau LTE. Le volume de données transmis par Wi-Fi augmente donc par rapport au volume total transmis.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{img/B/B6_offloading_vs_radius.png}
+    \caption{Évolution du taux moyen d'offloading en fonction du rayon Wi-Fi pour différentes vitesses}
+    \label{fig:B6_radius}
+\end{figure}
+
+La figure~\ref{fig:B6_radius} confirme cette tendance : pour chaque vitesse, l'augmentation du rayon de couverture entraîne une hausse du taux moyen d'offloading.
+
+\paragraph{Analyse de l'influence de la vitesse de déplacement}
+
+Nous étudions maintenant l'effet de la vitesse de l'UE en conservant le même rayon de couverture Wi-Fi.
+
+Les résultats montrent une diminution du taux d'offloading lorsque la vitesse de déplacement augmente.
+
+Par exemple, pour un rayon de 60 m, le taux moyen passe de \(50{,}64\,\%\) à 3 m/s à \(21{,}80\,\%\) à 7 m/s.
+
+La diminution correspondante est :
+
+\[
+\Delta O_{V,\,R=60}
+=
+21{,}7969 - 50{,}6437
+\]
+
+\[
+\boxed{
+\Delta O_{V,\,R=60}
+\approx -28{,}85 \text{ points}
+}
+\]
+
+Cette tendance est également observée pour les rayons de 40 m et de 50 m.
+
+L'explication repose principalement sur la durée de présence de l'UE dans la zone de couverture Wi-Fi.
+
+À rayon constant, une vitesse plus élevée entraîne un passage plus rapide dans le hotspot. L'UE dispose donc de moins de temps pour transmettre ses données via le Wi-Fi. Une part plus importante du trafic est alors acheminée par l'interface LTE, ce qui réduit le taux d'offloading global.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{img/B/B6_offloading_vs_speed.png}
+    \caption{Évolution du taux moyen d'offloading en fonction de la vitesse de déplacement pour différents rayons}
+    \label{fig:B6_speed}
+\end{figure}
+
+La figure~\ref{fig:B6_speed} met en évidence la relation inverse entre la vitesse de déplacement et le taux d'offloading : plus l'UE se déplace rapidement, moins le trafic est déchargé vers le Wi-Fi.
+
+\paragraph{Analyse globale des moyennes}
+
+Afin d'observer simultanément l'influence des deux paramètres, nous représentons les moyennes obtenues sous forme d'une carte thermique.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.78\textwidth]{img/B/B6_heatmap_mean.png}
+    \caption{Carte thermique du taux moyen d'offloading selon le rayon Wi-Fi et la vitesse de déplacement}
+    \label{fig:B6_heatmap_mean}
+\end{figure}
+
+La figure~\ref{fig:B6_heatmap_mean} permet de dégager deux tendances principales :
+\begin{itemize}
+    \item Les valeurs les plus élevées sont obtenues pour un rayon de 60 m et une vitesse de 3 m/s.
+    \item Les valeurs les plus faibles sont observées pour un rayon de 40 m et une vitesse de 7 m/s.
+\end{itemize}
+
+La combinaison d'une grande couverture Wi-Fi et d'une faible vitesse de déplacement est donc la configuration la plus favorable à l'offloading dans le scénario étudié.
+
+\subsection{Analyse de la variabilité entre les graines aléatoires}
+
+L'énoncé demande également d'étudier l'amplitude de la variabilité observée entre les graines aléatoires et de la comparer à l'effet des paramètres étudiés.
+
+Pour cela, nous analysons les écarts-types reportés dans le tableau~\ref{tab:B6_results}.
+
+\paragraph{Interprétation des écarts-types}
+
+Pour les configurations à 3 m/s, les écarts-types obtenus sont :
+\begin{itemize}
+    \item \(0{,}3505\) point pour un rayon de 40 m ;
+    \item \(0{,}5752\) point pour un rayon de 50 m ;
+    \item \(0{,}6431\) point pour un rayon de 60 m.
+\end{itemize}
+
+Ces valeurs indiquent une faible dispersion des taux d'offloading entre les cinq graines utilisées.
+
+Pour les vitesses de 5 et 7 m/s, les écarts-types sont nuls à la précision affichée. Cela signifie que les cinq exécutions correspondantes ont produit les mêmes volumes transmis sur les interfaces Wi-Fi et LTE, et donc le même taux d'offloading.
+
+Il ne s'agit pas d'une erreur de calcul statistique. La vérification des fichiers de résultats montre que les valeurs de \(B_{\mathrm{WiFi,Tx}}\) et de \(B_{\mathrm{LTE,Tx}}\) sont identiques entre les cinq exécutions pour ces configurations.
+
+Il faut toutefois interpréter ce résultat avec prudence : un écart-type nul signifie uniquement qu'aucune variation n'a été observée dans les métriques mesurées pour ces cinq exécutions. Il ne démontre pas que le mécanisme est intrinsèquement dépourvu de variabilité.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.78\textwidth]{img/B/B6_heatmap_std.png}
+    \caption{Carte thermique de l'écart-type du taux d'offloading entre les cinq graines}
+    \label{fig:B6_heatmap_std}
+\end{figure}
+
+La figure~\ref{fig:B6_heatmap_std} confirme que la dispersion observée est faible et qu'elle est principalement visible pour les configurations à 3 m/s.
+
+\paragraph{Comparaison entre variabilité et effet des paramètres}
+
+Les variations provoquées par le changement du rayon et de la vitesse sont nettement supérieures aux dispersions mesurées entre les graines.
+
+Par exemple, à 3 m/s, l'augmentation du rayon de 40 à 60 m entraîne une hausse de l'offloading d'environ 16,93 points, alors que les écarts-types restent inférieurs à 0,65 point.
+
+De même, à un rayon de 60 m, le passage de 3 à 7 m/s entraîne une diminution d'environ 28,85 points.
+
+Ces différences montrent que, dans le scénario simulé, l'effet du rayon de couverture et de la vitesse de déplacement est beaucoup plus important que la variabilité observée entre les cinq graines.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{img/B/B6_seed_dispersion.png}
+    \caption{Dispersion du taux d'offloading pour les différentes graines aléatoires}
+    \label{fig:B6_seed_dispersion}
+\end{figure}
+
+\subsection{Discussion des résultats et limites expérimentales}
+
+Les résultats obtenus sont cohérents avec le comportement attendu d'un mécanisme d'offloading fondé sur la couverture Wi-Fi et la mobilité de l'UE.
+
+L'augmentation du rayon du hotspot favorise l'utilisation du Wi-Fi, car elle augmente la durée pendant laquelle l'UE peut transmettre des données via cette interface.
+
+À l'inverse, l'augmentation de la vitesse réduit le temps de présence dans la zone de couverture et diminue ainsi le volume de données transmis par Wi-Fi.
+
+Il convient néanmoins de préciser certaines limites du modèle utilisé.
+
+Premièrement, le shadowing a été désactivé (\(\text{shadowSigma}=0\)) et aucun bruit n'a été ajouté à la mesure de distance (\(\text{distNoise}=0\)). Le scénario ne prend donc pas en compte les fluctuations de puissance reçue provoquées par les obstacles ou les variations aléatoires du canal radio.
+
+Deuxièmement, même si les graines aléatoires sont différentes et que le décalage initial varie entre les exécutions, les résultats montrent que certaines configurations produisent exactement les mêmes volumes transmis. La variabilité observée dépend donc du scénario géométrique, de la vitesse et du fonctionnement discret de la logique de bascule.
+
+Par conséquent, les écarts-types nuls ne doivent pas être généralisés à des environnements radio plus réalistes. L'introduction d'un modèle de propagation avec shadowing ou fading pourrait faire apparaître une variabilité supplémentaire.
+
+Ces limites n'invalident pas les résultats obtenus : elles définissent le cadre dans lequel les conclusions de cette expérience sont applicables.
+
+\subsection{Conclusion de la question B6}
+
+Cette expérience a permis de quantifier l'influence du rayon de couverture Wi-Fi et de la vitesse de déplacement de l'UE sur le taux d'offloading.
+
+Les 45 simulations réalisées, réparties sur neuf combinaisons de paramètres et cinq graines aléatoires par combinaison, mettent en évidence les conclusions suivantes :
+
+\begin{itemize}
+    \item L'augmentation du rayon de couverture Wi-Fi améliore le taux d'offloading, car elle augmente la durée de disponibilité du hotspot pour l'UE.
+    \item L'augmentation de la vitesse de déplacement réduit le taux d'offloading, car l'UE traverse plus rapidement la zone de couverture Wi-Fi.
+    \item La variabilité entre les graines est faible dans le scénario étudié et reste nettement inférieure aux variations provoquées par les changements de rayon et de vitesse.
+\end{itemize}
+
+La meilleure configuration parmi celles testées est obtenue avec un rayon Wi-Fi de 60 m et une vitesse de 3 m/s, pour laquelle le taux moyen d'offloading atteint environ \(50{,}64\,\%\).
+
+À l'inverse, la configuration avec un rayon de 40 m et une vitesse de 7 m/s donne le taux le plus faible, soit environ \(14{,}10\,\%\).
+
+On peut donc conclure que l'efficacité du Wi-Fi offloading dépend fortement de la dimension de la zone de couverture et de la mobilité de l'utilisateur. Une couverture Wi-Fi plus étendue et une vitesse de déplacement plus faible favorisent le déchargement du trafic LTE vers le réseau Wi-Fi dans le scénario considéré.
