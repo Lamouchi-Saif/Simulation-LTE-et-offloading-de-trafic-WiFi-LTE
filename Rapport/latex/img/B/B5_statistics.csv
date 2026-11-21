@@ -1,5 +1,5 @@
-,nSwitch,nSwitch,nPingPong,nPingPong,offloadRx,offloadRx,tputMean_Mbps,tputMean_Mbps,tputCV,tputCV,lossPct,lossPct,delayMean_ms,delayMean_ms,delayMax_ms,delayMax_ms,outage_s,outage_s
-,mean,std,mean,std,mean,std,mean,std,mean,std,mean,std,mean,std,mean,std,mean,std
-configuration,,,,,,,,,,,,,,,,,,
-H=0 m,20.0,0.0,19.0,0.0,0.5128,0.0,2.0,0.0,0.00844,4.472135954999559e-05,0.0,0.0,9.183728,0.005533544975872637,22.7307,0.0,0.0,0.0
-H=5 m,19.0,0.0,18.0,0.0,0.5,0.0,2.0,0.0,0.00846,0.0,0.0,0.0,9.39735,0.005341306020066985,22.7307,0.0,0.0,0.0
+H,n,nSwitch_mean,nSwitch_std,nSwitch_ci95,nPingPong_mean,nPingPong_std,nPingPong_ci95,offloadTx_mean,offloadTx_std,offloadTx_ci95,tputCV_mean,tputCV_std,tputCV_ci95,lossPct_mean,lossPct_std,lossPct_ci95,delayMean_ms_mean,delayMean_ms_std,delayMean_ms_ci95,delayMax_ms_mean,delayMax_ms_std,delayMax_ms_ci95,nSwitch_min,nSwitch_max
+0.00000,10,59.40000,6.60303,4.72319,58.30000,6.65081,4.75738,0.51084,0.03185,0.02279,0.01089,0.00064,0.00046,0.00000,0.00000,0.00000,9.23373,0.52205,0.37342,22.73070,0.00000,0.00000,44,68
+2.00000,10,27.20000,2.39444,1.71276,24.70000,3.12872,2.23800,0.51024,0.05916,0.04231,0.00914,0.00041,0.00029,0.00000,0.00000,0.00000,9.23459,0.96545,0.69059,22.73070,0.00000,0.00000,24,32
+5.00000,10,4.10000,1.66333,1.18979,1.20000,0.91894,0.65732,0.40639,0.22454,0.16062,0.00461,0.00059,0.00042,0.00000,0.00000,0.00000,10.91968,3.65357,2.61342,22.49070,0.24585,0.17586,2,7
+8.00000,10,0.20000,0.63246,0.45240,0.00000,0.00000,0.00000,0.08141,0.25744,0.18415,0.00299,0.00026,0.00018,0.00000,0.00000,0.00000,16.20575,4.19161,2.99829,22.13070,0.00000,0.00000,0,2
