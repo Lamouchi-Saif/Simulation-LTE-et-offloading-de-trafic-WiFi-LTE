@@ -1,0 +1,178 @@
+\documentclass[12pt,a4paper]{report}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage{lmodern,microtype}
+\usepackage[a4paper,margin=2.4cm,headheight=15pt]{geometry}
+
+\usepackage{
+graphicx,float,booktabs,array,tabularx,caption,subcaption,
+multirow,amsmath,siunitx,xcolor,listings,fancyhdr,
+hyperref,pgfplots,enumitem
+}
+
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+\pgfplotsset{compat=1.18}
+\sisetup{locale=FR,per-mode=symbol}
+
+\definecolor{bleu}{RGB}{20,55,95}
+\definecolor{griscode}{RGB}{246,247,249}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=bleu,
+    urlcolor=bleu,
+    citecolor=bleu,
+    pdftitle={Compte rendu TP3 - Simulation LTE et offloading de trafic WiFi/LTE},
+    pdfauthor={EL JENZRI Yassine, LAMOUCHI Seif, MOUSSA Raslene, KHLIF Iheb}
+}
+
+% % --- Table des matières : profondeur chapitres + sections + sous-sections ---
+\setcounter{tocdepth}{2}
+\setcounter{secnumdepth}{2}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{Protocoles des réseaux mobiles}
+\rhead{TP3 -- Simulation LTE et offloading de trafic WiFi/LTE}
+\cfoot{\thepage}
+
+\setlength{\parskip}{5pt}
+\setlength{\parindent}{0pt}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    backgroundcolor=\color{griscode},
+    frame=single,
+    breaklines=true,
+    columns=fullflexible,
+    showstringspaces=false
+}
+
+\newcommand{\capture}[3]{
+\begin{figure}[H]
+\centering
+\IfFileExists{#1}{
+    \includegraphics[width=.96\textwidth,height=.58\textheight,keepaspectratio]{#1}
+}{
+    \fbox{
+        \parbox{.88\textwidth}{
+            \centering
+            \vspace{1cm}
+            \textbf{Capture à ajouter :}
+            \texttt{#1}
+            \vspace{1cm}
+        }
+    }
+}
+\caption{#2}
+\label{#3}
+\end{figure}
+}
+\newcommand{\todo}[1]{\textit{[À compléter après réalisation et mesure : #1]}}
+
+\begin{document}
+
+% ==================================================
+% PAGE DE GARDE
+% ==================================================
+
+\pagenumbering{gobble}
+
+\begin{titlepage}
+\centering
+
+\noindent
+\begin{minipage}[c]{0.46\textwidth}
+\centering
+\IfFileExists{universite-de-carthage.png}{
+    \includegraphics[height=4cm,keepaspectratio]{universite-de-carthage.png}
+}{
+    \fbox{
+        \parbox[c][2.2cm][c]{0.88\linewidth}{
+            \centering Logo\\Université de Carthage
+        }
+    }
+}
+\end{minipage}
+\hfill
+\begin{minipage}[c]{0.46\textwidth}
+\centering
+\IfFileExists{logo-insat.jpg}{
+    \includegraphics[height=3.5cm,keepaspectratio]{logo-insat.jpg}
+}{
+    \fbox{
+        \parbox[c][2.2cm][c]{0.88\linewidth}{
+            \centering Logo\\INSAT
+        }
+    }
+}
+\end{minipage}
+
+\par\vspace{.35cm}
+
+{\large Ministère de l'Enseignement Supérieur et de la Recherche Scientifique\par}
+\vspace{.35cm}
+
+{\large Université de Carthage\par}
+\vspace{.2cm}
+
+{\large Institut National des Sciences Appliquées et de Technologie (INSAT)\par}
+
+\vspace{.7cm}
+{\color{bleu}\rule{\textwidth}{1.3pt}}
+\vspace{.3cm}
+
+{\Huge\bfseries COMPTE RENDU DU TP3\par}
+\vspace{.2cm}
+
+{\LARGE Protocoles des réseaux mobiles\par}
+\vspace{.3cm}
+
+{\color{bleu}\rule{\textwidth}{1.3pt}}
+\vspace{.65cm}
+
+{\huge\bfseries Simulation LTE et offloading de trafic WiFi/LTE\par}
+
+\vspace{.75cm}
+{\Large\textbf{Réalisé par}\par}
+\vspace{.25cm}
+
+{\Large EL JENZRI Yassine\par}
+\vspace{.08cm}
+{\Large LAMOUCHI Seif\par}
+\vspace{.08cm}
+{\Large MOUSSA Raslene\par}
+\vspace{.08cm}
+{\Large KHLIF Iheb\par}
+
+\vfill
+
+\begin{tabular}{rl}
+\textbf{Matière :} & Protocoles des réseaux mobiles\\
+\textbf{Niveau :} & Cycle ingénieur -- RT4\\
+\textbf{Responsable du cours et TP :} & Dr Mériem Afif\\
+\textbf{Année universitaire :} & 2026--2027
+\end{tabular}
+
+\vspace{.45cm}
+
+\end{titlepage}
+
+% ==================================================
+% TABLE DES MATIERES
+% ==================================================
+
+\pagenumbering{roman}
+\setcounter{page}{1}
+\tableofcontents
+\clearpage
+\pagenumbering{arabic}
+
+\include{A/A}
+\include{B/B}
+\include{C/C}
+
+\end{document}
