@@ -1,0 +1,13 @@
+Question=B5
+hysts=0 2 5 8
+runs=10
+seed=1
+radius=50
+amp=3
+speed=2
+simTime=80
+noise=2
+shadow=0
+check=0.5
+ppwin=5
+rate=2

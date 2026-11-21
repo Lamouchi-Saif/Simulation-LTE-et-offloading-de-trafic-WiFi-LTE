@@ -1,0 +1,5 @@
+t,direction,dist_m,rssi_dBm
+3,LTE->WIFI,47,-74.3751
+12,WIFI->LTE,52.6,-75.6588
+14.5,LTE->WIFI,48.4,-74.7142
+36,WIFI->LTE,51.8,-75.4606

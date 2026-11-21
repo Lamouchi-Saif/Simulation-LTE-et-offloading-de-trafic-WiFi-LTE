@@ -1,0 +1,1 @@
+[B5_H5_run1] crit=distance R=50 H=5 v=2 b=0 run=1 | bascules=3 (pingpong=1) offloadTx=0.814031 offloadRx=0.814031 sendErrors=0 theorie=-1 CV=0.00442144 perte=0%

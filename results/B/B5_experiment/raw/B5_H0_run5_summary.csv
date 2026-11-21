@@ -1,0 +1,2 @@
+criterion,pattern,apRadius,hyst,thrIn,thrOut,rssiIn,rssiOut,speed,offset_b,shadowSigma,distNoise,seed,run,nIn,nOut,nSwitch,nPingPong,txBytesWifi,txBytesLte,rxBytesWifi,rxBytesLte,offloadTx,offloadRx,offloadTheory,tputMean_Mbps,tputStd_Mbps,tputCV,lossPct,delayMean_ms,delayMax_ms,outage_s,tcpTput_Mbps
+distance,border,50.00000,0.00000,50.00000,50.00000,-75.00000,-75.00000,2.00000,0.00000,0.00000,2.00000,1,5,30,30,60,59,10128000.00000,9372000.00000,10128000.00000,9372000.00000,0.51938,0.51938,-1.00000,1.99963,0.02269,0.01135,0.00000,9.08968,22.73070,0.00000,0.00000
