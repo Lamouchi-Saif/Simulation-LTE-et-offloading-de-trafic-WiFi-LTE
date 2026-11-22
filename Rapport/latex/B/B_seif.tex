@@ -955,3 +955,358 @@ plus étendue et une vitesse de déplacement plus faible
 favorisent le déchargement du trafic LTE vers le réseau
 Wi-Fi dans le scénario considéré, avec une puissance
 d'émission adaptée au rayon de couverture.
+
+
+
+\section{Question 7 : Comparaison du critère de bascule basé sur la distance et du RSSI}
+
+\subsection{Objectif}
+
+L'objectif de cette expérience est de remplacer le mécanisme de
+bascule basé sur la distance entre l'UE et le point d'accès Wi-Fi
+par un mécanisme basé sur la puissance du signal reçu (RSSI).
+
+Cette comparaison permet d'étudier l'influence du critère de
+décision sur le comportement de l'offloading Wi-Fi/LTE, notamment
+sur le nombre de bascules, le taux d'offloading, le délai moyen
+et la stabilité du mécanisme de mobilité.
+
+Conformément à l'énoncé, le RSSI est récupéré au niveau de la
+couche PHY Wi-Fi de l'UE. Les deux mécanismes sont ensuite
+comparés dans les mêmes conditions de simulation, en utilisant
+cinq graines aléatoires.
+
+\subsection{Paramètres expérimentaux}
+
+Les deux critères ont été évalués dans les mêmes conditions
+de simulation. Afin de garantir une comparaison équitable,
+les cinq mêmes graines aléatoires ont été utilisées pour les
+deux configurations.
+
+\begin{table}[H]
+\centering
+\caption{Paramètres de simulation de la question 7}
+\label{tab:q7_parameters}
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Paramètre} & \textbf{Valeur} \\
+\hline
+Rayon du hotspot Wi-Fi & 50 m \\
+Hystérésis ($H$) & 2 m \\
+Seuil d'entrée (distance) & 48 m \\
+Seuil de sortie (distance) & 52 m \\
+Seuil RSSI d'entrée & -74.468 dBm \\
+Seuil RSSI de sortie & -75.511 dBm \\
+Vitesse de l'UE & 5 m/s \\
+Durée de simulation & 80 s \\
+Nombre de graines & 5 \\
+Shadowing & Désactivé \\
+Bruit sur la distance & Désactivé \\
+\hline
+\end{tabular}
+\end{table}
+
+Pour le critère basé sur la distance, l'UE entre dans la zone
+Wi-Fi lorsque sa distance par rapport au point d'accès devient
+inférieure ou égale à 48 m. Il quitte cette zone lorsque cette
+distance dépasse 52 m. Cette différence entre les seuils
+d'entrée et de sortie permet d'introduire une hystérésis de
+2 m.
+
+Pour le critère RSSI, la puissance du signal reçu est exploitée
+afin de déterminer les instants de bascule entre les interfaces
+Wi-Fi et LTE. Les seuils utilisés sont exprimés en dBm :
+-74.468 dBm pour l'entrée dans le réseau Wi-Fi et
+-75.511 dBm pour la sortie.
+
+La récupération du RSSI est réalisée au niveau de la couche
+PHY Wi-Fi de l'UE à l'aide de la trace source
+\texttt{MonitorSnifferRx}. Le callback associé exploite
+l'information de puissance reçue, notamment le champ
+\texttt{signalNoiseDbm} ou son équivalent selon la version
+de NS-3, afin d'obtenir une mesure exprimée en dBm.
+
+Cette mesure est ensuite utilisée par le mécanisme de décision
+pour déterminer si les conditions radio permettent de maintenir
+la connexion Wi-Fi ou s'il est préférable de revenir vers LTE.
+
+\subsection{Résultats expérimentaux}
+
+Les simulations ont été exécutées pour les graines 1 à 5,
+en appliquant successivement les deux critères de bascule.
+Le tableau suivant présente le nombre de bascules obtenu
+pour chaque graine.
+
+\begin{table}[H]
+\centering
+\caption{Nombre de bascules pour chaque graine}
+\label{tab:q7_switches_seed}
+\begin{tabular}{|c|c|c|c|}
+\hline
+\textbf{Seed} & \textbf{Distance} & \textbf{RSSI}
+& \textbf{Différence} \\
+\hline
+1 & 20 & 20 & 0 \\
+2 & 20 & 20 & 0 \\
+3 & 20 & 19 & -1 \\
+4 & 20 & 19 & -1 \\
+5 & 20 & 19 & -1 \\
+\hline
+\textbf{Moyenne} & \textbf{20.0} & \textbf{19.4}
+& \textbf{-0.6} \\
+\hline
+\end{tabular}
+\end{table}
+
+Les statistiques globales, calculées à partir des cinq
+simulations, sont présentées dans le tableau suivant.
+Les valeurs correspondent à la moyenne et à l'écart-type
+des métriques mesurées.
+
+\begin{table}[H]
+\centering
+\caption{Comparaison statistique des deux critères de bascule}
+\label{tab:q7_statistics}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Métrique} & \textbf{Distance} & \textbf{RSSI} \\
+\hline
+Nombre de bascules
+& 20.00 $\pm$ 0.00
+& 19.40 $\pm$ 0.55 \\
+
+Entrées Wi-Fi
+& 10.00 $\pm$ 0.00
+& 10.00 $\pm$ 0.00 \\
+
+Sorties Wi-Fi
+& 10.00 $\pm$ 0.00
+& 9.40 $\pm$ 0.55 \\
+
+Ping-pong
+& 19.00 $\pm$ 0.00
+& 18.40 $\pm$ 0.55 \\
+
+Offloading TX (\%)
+& 48.84 $\pm$ 2.81
+& 45.25 $\pm$ 2.99 \\
+
+Débit moyen (Mbps)
+& 2.00 $\pm$ 0.00
+& 2.00 $\pm$ 0.00 \\
+
+Délai moyen (ms)
+& 9.58 $\pm$ 0.46
+& 10.17 $\pm$ 0.49 \\
+
+Pertes (\%)
+& 0.00 $\pm$ 0.00
+& 0.00 $\pm$ 0.00 \\
+
+Interruption (s)
+& 0.00 $\pm$ 0.00
+& 0.00 $\pm$ 0.00 \\
+\hline
+\end{tabular}
+\end{table}
+
+Ces résultats montrent que les deux mécanismes présentent
+des performances relativement proches dans le scénario étudié.
+Cependant, quelques différences apparaissent au niveau du
+nombre de bascules, du taux d'offloading et du délai moyen.
+
+\subsection{Analyse du nombre de bascules}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]
+{img/B/figures/Q7_switches_mean_std.png}
+\caption{Nombre moyen de bascules et écart-type selon le critère}
+\label{fig:q7_switches}
+\end{figure}
+
+Le critère basé sur la distance produit systématiquement
+20 bascules pour les cinq graines, avec un écart-type nul.
+
+En revanche, le critère RSSI produit 20 bascules pour les
+deux premières graines et 19 bascules pour les trois autres.
+Le nombre moyen de bascules est ainsi de 19.4, avec un
+écart-type de 0.55.
+
+La différence moyenne appariée entre les deux critères,
+calculée comme RSSI moins distance, est de -0.6 bascule.
+Cette différence reste limitée et indique que les deux
+mécanismes présentent un comportement globalement similaire
+dans les conditions de simulation étudiées.
+
+La figure suivante permet d'observer plus précisément
+la variation du nombre de bascules pour chacune des
+cinq graines.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]
+{img/B/figures/Q7_switches_by_seed.png}
+\caption{Nombre de bascules obtenu pour chaque graine}
+\label{fig:q7_switches_by_seed}
+\end{figure}
+
+On constate que le mécanisme basé sur la distance conserve
+un comportement identique sur les cinq exécutions, tandis
+que celui basé sur le RSSI présente une légère variation
+selon la graine utilisée.
+
+\subsection{Analyse du taux d'offloading}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]
+{img/B/figures/Q7_offloading_tx.png}
+\caption{Comparaison du taux d'offloading transmis selon le critère}
+\label{fig:q7_offloading}
+\end{figure}
+
+Le taux moyen d'offloading transmis est de 48.84\,\%
+pour le critère basé sur la distance, contre 45.25\,\%
+pour le critère basé sur le RSSI.
+
+Le critère basé sur la distance permet donc d'acheminer
+une proportion plus importante du trafic vers le Wi-Fi.
+La différence moyenne appariée entre les deux critères
+est de -0.0359, soit une diminution de 3.59 points de
+pourcentage pour le critère RSSI.
+
+Cette différence peut être liée aux instants de bascule
+et à la durée de connexion sur chaque interface. Le critère
+utilisé influence donc directement la proportion du trafic
+acheminée par le réseau Wi-Fi.
+
+\subsection{Analyse du délai et de la stabilité du débit}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]
+{img/B/figures/Q7_delay_mean.png}
+\caption{Comparaison du délai moyen selon le critère de bascule}
+\label{fig:q7_delay}
+\end{figure}
+
+Le délai moyen mesuré est de 9.58 ms pour le critère basé
+sur la distance et de 10.17 ms pour le critère basé sur
+le RSSI.
+
+La différence moyenne appariée, calculée comme RSSI moins
+distance, est d'environ 0.585 ms. Le délai moyen est donc
+légèrement plus faible avec le critère basé sur la distance
+dans cette campagne de simulation.
+
+Par ailleurs, le débit moyen mesuré reste identique pour
+les deux critères, avec une valeur de 2 Mbps. Les résultats
+indiquent également un taux de pertes nul et une durée
+d'interruption mesurée nulle selon la métrique utilisée
+dans cette campagne.
+
+Ces observations montrent que, malgré les différences
+constatées au niveau du taux d'offloading et du délai moyen,
+les deux mécanismes conservent ici le même débit moyen
+et ne présentent pas d'interruption mesurée.
+
+\subsection{Analyse temporelle du mécanisme de bascule}
+
+Afin de compléter l'analyse statistique, l'évolution
+temporelle du mécanisme de bascule est étudiée à partir
+de la première graine de simulation.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]
+{img/B/figures/Q7_timeline_seed_1.png}
+\caption{Évolution temporelle des bascules pour la première graine}
+\label{fig:q7_timeline}
+\end{figure}
+
+Cette représentation permet d'observer la succession
+des changements entre les interfaces Wi-Fi et LTE
+au cours de la simulation.
+
+Contrairement aux tableaux statistiques, qui présentent
+uniquement le nombre total de bascules, cette figure
+permet de visualiser leur répartition dans le temps et
+de mieux comprendre le comportement dynamique des deux
+mécanismes.
+
+\subsection{Discussion}
+
+Les résultats obtenus montrent que le remplacement du
+critère géométrique par le RSSI entraîne une légère
+diminution du nombre moyen de bascules et du taux
+d'offloading.
+
+Le critère basé sur la distance produit 20 bascules en
+moyenne, contre 19.4 pour le critère RSSI. De même, le
+taux moyen d'offloading est de 48.84\,\% avec la distance
+et de 45.25\,\% avec le RSSI.
+
+Cependant, il convient de noter que les différences
+observées sont descriptives. Aucun test statistique
+inférentiel n'a été exécuté pour cette campagne, le
+module SciPy n'étant pas installé dans l'environnement
+d'analyse. Les cinq exécutions permettent donc de
+comparer les tendances et la variabilité des deux
+mécanismes, mais ne permettent pas de conclure
+formellement à une différence statistiquement
+significative entre les critères.
+
+Il faut également tenir compte du modèle de propagation
+utilisé. Dans ce scénario, le shadowing et le bruit
+sur la distance sont désactivés. La puissance reçue
+dépend donc principalement de la distance entre l'UE
+et le point d'accès Wi-Fi.
+
+Dans un environnement urbain dense ou indoor, la
+présence de murs, d'obstacles, d'interférences et
+d'effets de multi-trajets peut modifier la puissance
+reçue indépendamment de la distance géométrique.
+
+Dans ces conditions, le RSSI constitue un indicateur
+plus représentatif des conditions radio effectivement
+rencontrées par le terminal. Le critère basé sur la
+distance reste néanmoins plus simple à implémenter,
+mais ne reflète pas toujours la qualité réelle du
+lien Wi-Fi.
+
+Il convient enfin de préciser que le RSSI représente
+uniquement la puissance du signal reçu et ne suffit
+pas à caractériser complètement la qualité d'une
+liaison radio, notamment en présence d'interférences
+et de bruit.
+
+\subsection{Conclusion}
+
+Cette expérience a permis de comparer deux mécanismes
+de décision pour l'offloading Wi-Fi/LTE : un critère
+géométrique basé sur la distance et un critère radio
+basé sur la puissance du signal reçu (RSSI).
+
+Les résultats montrent des comportements proches dans
+le scénario étudié. Le critère basé sur la distance
+produit 20 bascules en moyenne, tandis que le critère
+RSSI en produit 19.4. Le taux moyen d'offloading est
+respectivement de 48.84\,\% et de 45.25\,\%.
+
+Le délai moyen mesuré est légèrement plus faible avec
+le critère basé sur la distance, tandis que le débit
+moyen reste identique pour les deux mécanismes,
+à 2 Mbps.
+
+Ainsi, aucune différence importante de comportement
+n'est mise en évidence dans cet environnement de
+propagation simplifié. Toutefois, le critère RSSI
+présente un intérêt particulier dans les environnements
+réels où la puissance reçue peut varier indépendamment
+de la distance géométrique.
+
+Le choix du mécanisme de bascule dépend donc principalement
+des conditions de propagation, de la mobilité du terminal
+et du niveau de précision souhaité pour la gestion de
+l'offloading Wi-Fi/LTE.

@@ -1,0 +1,5 @@
+metric,n_pairs,mean_delta,std_delta,wilcoxon_statistic,p_value,note
+nSwitch,5,-0.6,0.5477225575051662,,,SciPy non installé
+offloadTx,5,-0.035899999999999974,0.010709248339636176,,,SciPy non installé
+delayMean_ms,5,0.58475,0.17436015069390176,,,SciPy non installé
+tputMean_Mbps,5,0.0,0.0,,,SciPy non installé
