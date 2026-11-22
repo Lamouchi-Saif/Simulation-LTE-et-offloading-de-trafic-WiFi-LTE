@@ -1,0 +1,741 @@
+% ==================================================
+% PARTIE A -- Architecture et simulation LTE/EPC
+% Auteur : KHLIF Iheb
+% Les figures sont dans img/A/ (chemins relatifs au fichier principal).
+% ==================================================
+
+\chapter{Partie A --- Architecture et simulation LTE/EPC}
+
+Cette partie présente l'architecture LTE/EPC telle qu'elle est modélisée dans
+NS-3 (version 3.48), la simulation d'une communication de bout en bout, puis
+l'influence de la distance, de la mobilité et du handover sur le débit et sur la
+puissance reçue (RSRP). Les six questions du TP sont traitées dans l'ordre de
+l'énoncé.
+
+\section*{Paramètres communs aux simulations}
+
+Sauf mention contraire, toutes les simulations de cette partie reposent sur le
+même squelette, dérivé de l'exemple \texttt{lena-simple-epc.cc} (fichiers
+\texttt{tp3\_q1.cc}, \texttt{tp3\_q5.cc}, \texttt{tp3\_q5\_parallel.cc} et
+\texttt{tp3\_q6.cc}).
+
+\begin{table}[H]
+\centering
+\caption{Paramètres communs des simulations de la partie A.}
+\label{tab:A-params}
+\small
+\begin{tabularx}{\textwidth}{@{}lY@{}}
+\toprule
+\textbf{Élément} & \textbf{Valeur} \\
+\midrule
+Topologie & 1 eNodeB en $(0,0,0)$, 1 UE, 1 remote host relié au PGW
+(liaison point-à-point de \SI{100}{Gb/s}, délai \SI{10}{ms}, MTU 1500) \\
+Trafic & Deux flux UDP simultanés générés par \texttt{UdpClient} avec un
+paquet toutes les \SI{1}{ms} (taille par défaut de \SI{1024}{o}) :
+descendant (remote host $\rightarrow$ UE, port 1100) et montant
+(UE $\rightarrow$ remote host, port 2001), démarrés à \SI{0.5}{s} \\
+Charge offerte & $(1024+8+20+4)\times 8 / \SI{1}{ms} = \SI{8.448}{Mb/s}$
+par sens au niveau RLC (1024 o de données, 8 o UDP, 20 o IP, environ 4 o
+d'en-têtes PDCP/RLC) ; \SI{8.416}{Mb/s} au niveau IP \\
+Couche radio & Paramètres par défaut du module LTE : modèle de propagation
+de Friis, porteuse à \SI{2.12}{GHz}, 25 blocs de ressources (\SI{5}{MHz}),
+puissance d'émission de \SI{30}{dBm} (eNodeB) et \SI{10}{dBm} (UE) \\
+Traces & \texttt{lteHelper->EnableTraces()} (fichiers \texttt{DlRlcStats} et
+\texttt{UlRlcStats}), \texttt{lteHelper->EnablePhyTraces()} (fichier
+\texttt{DlRsrpSinrStats}) et FlowMonitor \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Le choix d'une charge de \SI{8.4}{Mb/s} par sens est important pour
+l'interprétation des résultats : c'est une charge \emph{fixe} (débit constant),
+inférieure à la capacité maximale de la cellule. Le débit mesuré ne peut donc
+jamais dépasser \SI{8.4}{Mb/s} et il ne diminue que lorsque la capacité du lien
+radio devient inférieure à cette charge.
+
+% ==================================================
+\section{Question 1 --- Simulation LTE/EPC et connectivité de bout en bout}
+% ==================================================
+
+\subsection{Principe du scénario}
+
+Le scénario construit suit la chaîne
+\emph{Remote host} $\leftrightarrow$ \emph{PGW/SGW} $\leftrightarrow$
+\emph{eNodeB} $\leftrightarrow$ \emph{UE}. Le cœur de réseau est instancié par
+\texttt{PointToPointEpcHelper}, la partie radio par \texttt{LteHelper}. Les
+étapes principales sont les suivantes :
+
+\begin{enumerate}[nosep]
+\item création des deux helpers et de la liaison entre l'EPC et le
+\texttt{LteHelper} (\texttt{SetEpcHelper}) ;
+\item création du remote host, installation de la pile Internet et connexion au
+PGW par une liaison point-à-point ;
+\item création d'un eNodeB et d'un UE, placés par un modèle de mobilité à
+position constante ;
+\item installation des équipements LTE, attribution d'une adresse IP à l'UE par
+le PGW (\texttt{AssignUeIpv4Address}) et attachement de l'UE à l'eNodeB ;
+\item configuration du routage statique : route vers le réseau \texttt{7.0.0.0/8}
+(réseau des UE) sur le remote host, et passerelle par défaut de l'UE vers le
+PGW ;
+\item installation des applications (flux UDP, ping) et activation des traces.
+\end{enumerate}
+
+\begin{lstlisting}[language=C++]
+Ptr<LteHelper> lteHelper = CreateObject<LteHelper>();
+Ptr<PointToPointEpcHelper> epcHelper = CreateObject<PointToPointEpcHelper>();
+lteHelper->SetEpcHelper(epcHelper);
+
+// Routage : le remote host joint le reseau des UE via le PGW ;
+// l'UE utilise le PGW comme passerelle par defaut.
+remoteHostStaticRouting->AddNetworkRouteTo(Ipv4Address("7.0.0.0"),
+                                           Ipv4Mask("255.0.0.0"), 1);
+ueStaticRouting->SetDefaultRoute(epcHelper->GetUeDefaultGatewayAddress(), 1);
+
+lteHelper->Attach(ueLteDevs.Get(0), enbLteDevs.Get(0));
+
+PingHelper ping(ueIpIface.GetAddress(0));   // remote host -> UE
+lteHelper->EnableTraces();
+lteHelper->EnablePhyTraces();
+\end{lstlisting}
+
+\subsection{Vérification par ping}
+
+Un ping est lancé depuis le remote host vers l'UE (adresse \texttt{7.0.0.2},
+attribuée par le PGW dans le réseau \texttt{7.0.0.0/8}). Le résultat est
+présenté en figure~\ref{fig:A-ping}.
+
+\capture{img/A/q1-ping.png}{Ping du remote host vers l'UE (adresse
+\texttt{7.0.0.2}) : connectivité de bout en bout vérifiée.}{fig:A-ping}
+
+La connectivité de bout en bout est établie : les quatre requêtes reçoivent une
+réponse, sans perte. Deux observations méritent d'être commentées :
+
+\begin{itemize}[nosep]
+\item \textbf{TTL = 63.} Le TTL initial (64) est décrémenté d'une unité : le
+paquet a traversé un seul routeur IP, le PGW. Le tunnel GTP-U entre le PGW et
+l'eNodeB est transparent pour la couche IP de bout en bout, ce qui est
+précisément le rôle de l'encapsulation GTP-U.
+\item \textbf{RTT d'environ \SI{29}{ms} à \SI{32}{ms}.} La liaison PGW--remote
+host introduit à elle seule $2\times\SI{10}{ms}=\SI{20}{ms}$. Les \SI{9}{ms}
+à \SI{12}{ms} restants correspondent à la traversée de l'interface radio (en
+LTE, la transmission est organisée en sous-trames de \SI{1}{ms} ; l'ordonnancement
+descendant et surtout la procédure d'allocation montante -- demande
+d'ordonnancement puis attribution de ressources -- ajoutent quelques
+millisecondes) ainsi qu'au traitement dans les couches PDCP/RLC/MAC. L'alternance
+entre \SI{28.9}{ms} et \SI{31.9}{ms} (écart de \SI{3}{ms}) provient de
+l'alignement des paquets sur la cadence des sous-trames et des opportunités
+d'émission montante.
+\end{itemize}
+
+% ==================================================
+\section{Question 2 --- Rôle des entités de l'architecture EPC simulée}
+% ==================================================
+
+La figure~\ref{fig:A-archi} résume l'architecture simulée. NS-3 sépare le réseau
+d'accès radio (E-UTRAN, constitué des eNodeB) du cœur de réseau (EPC).
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  ent/.style={draw=bleu, fill=bleu!8, rounded corners=3pt, minimum width=2.0cm,
+              minimum height=1.0cm, align=center, font=\small\bfseries},
+  autre/.style={ent, dashed, fill=white, font=\small},
+  lien/.style={thick, bleu},
+  lbl/.style={font=\scriptsize, align=center, text=black}]
+  \node[ent] (ue)  at (0,0)    {UE};
+  \node[ent] (enb) at (4.6,0)  {eNodeB};
+  \node[ent] (gw)  at (9.2,0)  {SGW/PGW};
+  \node[ent] (rh)  at (13.6,0) {Remote\\host};
+  \node[ent]   (mme)  at (6.9,2.8) {MME};
+  \node[autre] (enb2) at (2.0,2.8) {autre\\eNodeB};
+
+  \draw[lien] (ue) -- (enb) node[midway, above=1pt, lbl] {Uu};
+  \node[lbl, below=2pt] at (2.3,0) {PDCP/RLC/\\MAC/PHY};
+  \draw[lien] (enb) -- (gw) node[midway, above=1pt, lbl] {S1-U};
+  \node[lbl, below=2pt] at (6.9,0) {GTP-U/\\UDP/IP};
+  \draw[lien] (gw) -- (rh) node[midway, above=1pt, lbl] {SGi (IP)};
+  \node[lbl, below=2pt] at (11.4,0) {100~Gb/s\\10~ms};
+  \draw[lien, dashed] (enb2) -- (enb) node[midway, above, sloped, lbl] {X2};
+  \draw[lien] (enb) -- (mme) node[midway, above, sloped, lbl] {S1-MME};
+  \draw[lien] (mme) -- (gw) node[midway, above, sloped, lbl] {S11};
+
+  \draw[<->, thick, orange!80!black] (0,-1.7) -- (9.2,-1.7)
+    node[midway, below, lbl] {porteuse EPS = porteuse radio (Uu) + tunnel GTP-U (S1-U)};
+  \draw[<->, thick, green!50!black] (0,-2.7) -- (13.6,-2.7)
+    node[midway, below, lbl] {connexion IP de bout en bout (UE \texttt{7.0.0.2} $\leftrightarrow$ remote host \texttt{1.0.0.2})};
+\end{tikzpicture}
+\caption{Architecture LTE/EPC simulée sous NS-3 : entités, interfaces et
+piles protocolaires du plan usager.}
+\label{fig:A-archi}
+\end{figure}
+
+\begin{description}[style=nextline, leftmargin=1.2em, itemsep=4pt]
+\item[eNodeB (station de base).] C'est l'unique entité de l'E-UTRAN. Elle porte
+la pile radio PDCP/RLC/MAC/PHY avec les UE de sa cellule (interface Uu) et gère
+les ressources radio : ordonnancement (scheduler MAC), adaptation du débit
+(choix du MCS selon la qualité du canal), contrôle des mesures et décision de
+handover (RRC). Côté réseau, l'eNodeB relie chaque porteuse radio à un tunnel
+GTP-U vers la passerelle : il est le point de jonction entre le monde radio et
+le monde IP.
+
+\item[SGW (Serving Gateway).] Passerelle de données du côté accès. Elle termine
+les tunnels GTP-U venant des eNodeB et sert de point d'ancrage pour la mobilité
+entre eNodeB : lors d'un handover (Q6), c'est la SGW qui redirige le tunnel
+descendant vers le nouvel eNodeB sans que l'adresse IP de l'UE ne change.
+
+\item[PGW (PDN Gateway).] Passerelle vers le réseau extérieur (ici, le remote
+host). Elle attribue l'adresse IP de l'UE (réseau \texttt{7.0.0.0/8}),
+encapsule dans un tunnel GTP-U les paquets descendants destinés à l'UE
+(sélection de la porteuse EPS adaptée) et décapsule les paquets montants avant
+de les router vers Internet. C'est elle qui apparaît comme routeur dans le
+ping (TTL = 63). Dans NS-3, SGW et PGW sont regroupées dans un seul n\oe ud
+(\texttt{GetPgwNode()}).
+
+\item[MME (Mobility Management Entity).] Entité de contrôle : attachement de
+l'UE, établissement des porteuses EPS et gestion de la mobilité. Dans NS-3 elle
+est fortement simplifiée : la signalisation S1-MME est modélisée par des
+échanges directs entre entités et non par une liaison simulée.
+
+\item[Interface S1.] Elle relie les eNodeB à l'EPC. Sa partie plan usager,
+S1-U, transporte les paquets IP de l'UE dans des tunnels GTP-U (GTP-U sur UDP
+sur IP) entre l'eNodeB et la SGW/PGW ; sa partie plan de contrôle, S1-MME,
+véhicule la signalisation vers la MME. Dans NS-3, S1-U est simulée par une
+liaison point-à-point dédiée par eNodeB. L'interface X2, entre eNodeB voisins,
+sera utilisée à la question~6 pour le handover.
+\end{description}
+
+\paragraph{Parcours d'un paquet descendant.} Le remote host émet un paquet vers
+\texttt{7.0.0.2} ; le PGW le reçoit comme routeur, l'encapsule dans le tunnel
+GTP-U de la porteuse EPS de l'UE ; il traverse S1-U jusqu'à l'eNodeB, qui le
+décapsule puis le transmet à l'UE par les couches PDCP, RLC, MAC et PHY.
+Le chemin inverse est suivi par les paquets montants. La couche IP de l'UE et
+celle du remote host voient une simple connexion de bout en bout, comme le
+montre la figure de la pile protocolaire de l'énoncé.
+
+% ==================================================
+\section{Question 3 --- Débit descendant et montant en fonction du temps}
+% ==================================================
+
+Les fichiers \texttt{DlRlcStats.txt} et \texttt{UlRlcStats.txt} fournissent,
+par intervalle de \SI{0.25}{s}, le nombre d'octets reçus au niveau RLC. Le débit
+est calculé pour chaque intervalle $[t_{d}, t_{f}]$ par
+\[
+  D = \frac{8 \times \text{RxBytes}}{t_{f}-t_{d}}
+\]
+et rapporté au milieu de l'intervalle (script \texttt{tp3\_q3.py}). La
+simulation dure \SI{5}{s} avec l'UE fixe à \SI{60}{m} de l'eNodeB. Le résultat
+est donné en figure~\ref{fig:A-q3}.
+
+\capture{img/A/q3-debit-temps.png}{Débit LTE descendant (haut) et montant
+(bas) en fonction du temps, d'après \texttt{DlRlcStats} et
+\texttt{UlRlcStats}.}{fig:A-q3}
+
+\paragraph{Interprétation.}
+\begin{itemize}[nosep]
+\item \textbf{Régime permanent.} Le débit descendant se stabilise à
+\SI{8.45}{Mb/s}, valeur qui correspond exactement à la charge offerte au niveau
+RLC (\SI{8.448}{Mb/s}, tableau~\ref{tab:A-params}). À \SI{60}{m} de l'eNodeB le
+canal est excellent : la cellule écoule tout le trafic offert, sans perte. Le
+plateau n'est donc pas la capacité de la cellule, mais la charge imposée par la
+source UDP.
+\item \textbf{Phase transitoire.} Le premier échantillon (environ
+\SI{8.0}{Mb/s}) est plus faible : la source démarre à \SI{0.5}{s} et ses
+premiers paquets n'arrivent à l'UE qu'après un délai d'une douzaine de
+millisecondes (\SI{10}{ms} de liaison Internet auxquelles s'ajoute le délai
+radio), ce qui retire environ 5\,\% de volume à l'intervalle
+$[0.5\,;\,0.75]$~s.
+\item \textbf{Variations du débit montant.} Le débit montant oscille entre
+environ \SI{8.2}{Mb/s} et \SI{8.65}{Mb/s} autour de la même valeur moyenne
+(\SI{8.45}{Mb/s}). Ces variations d'environ $\pm 3\,\%$ ne traduisent pas une
+instabilité du lien : en montant, l'UE ne peut émettre que dans les ressources
+que l'eNodeB lui attribue sous forme de blocs de transport discrets (demande
+d'ordonnancement, rapport d'état du tampon, puis attribution). Les paquets
+sont donc écoulés par rafales, et le nombre d'octets qui tombe dans chaque
+fenêtre de \SI{0.25}{s} varie légèrement, alors que la moyenne reste égale au
+débit offert. En descendant, l'ordonnanceur de l'eNodeB dispose directement du
+tampon et lisse davantage la livraison.
+\end{itemize}
+
+% ==================================================
+\section{Question 4 --- Influence de la distance UE--eNodeB}
+% ==================================================
+
+\subsection{Méthodologie}
+
+L'UE est placé à position constante sur l'axe $x$ à une distance $d$ de
+l'eNodeB. Le script \texttt{tp3\_q4.py} lance la simulation pour
+$d \in \{100;\,300;\,500;\,1000;\,1500;\,2000;\,3000;\,4000;\,5000;\,6000;\,7000;\,8000;\,9000;\,10000\}$~m
+(paramètre \texttt{--distance} de \texttt{tp3\_q1}) puis, pour chaque run :
+\begin{itemize}[nosep]
+\item le débit moyen DL et UL est calculé à partir de \texttt{DlRlcStats} et
+\texttt{UlRlcStats} (octets reçus divisés par la durée) ;
+\item le RSRP est lu dans \texttt{DlRsrpSinrStats} (colonne en watts) ; les
+échantillons sont moyennés en puissance linéaire, puis convertis en dBm.
+\end{itemize}
+
+\subsection{Résultats}
+
+\capture{img/A/q4-debit-distance.png}{Débit moyen descendant et montant en
+fonction de la distance UE--eNodeB.}{fig:A-q4-debit}
+
+\capture{img/A/q4-rsrp-distance.png}{RSRP moyen en fonction de la distance
+UE--eNodeB.}{fig:A-q4-rsrp}
+
+\begin{table}[H]
+\centering
+\caption{Valeurs caractéristiques relevées sur les figures~\ref{fig:A-q4-debit}
+et~\ref{fig:A-q4-rsrp} (valeurs approchées) et RSRP théorique du modèle de
+Friis.}
+\label{tab:A-q4}
+\small
+\begin{tabular}{rcccc}
+\toprule
+Distance (m) & RSRP simulé (dBm) & RSRP Friis (dBm) & Débit DL (Mb/s) & Débit UL (Mb/s) \\
+\midrule
+100    & $-73{,}8$  & $-73{,}7$  & 8,42 & 8,44 \\
+1000   & $-93{,}8$  & $-93{,}7$  & 8,42 & 8,44 \\
+4000   & $-105{,}8$ & $-105{,}8$ & 8,42 & 8,44 \\
+5000   & $-107{,}7$ & $-107{,}7$ & 8,42 & 6,43 \\
+6000   & $-109{,}3$ & $-109{,}3$ & 8,42 & 4,95 \\
+7000   & $-110{,}6$ & $-110{,}6$ & 7,7  & 4,95 \\
+8000   & $-111{,}8$ & $-111{,}8$ & 7,2  & 4,38 \\
+9000   & $-112{,}8$ & $-112{,}8$ & 7,2  & 3,49 \\
+10000  & $-113{,}7$ & $-113{,}7$ & 6,18 & 3,49 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Interprétation}
+
+\paragraph{Le RSRP suit la loi de Friis.} Le RSRP décroît de
+\SI{-73.8}{dBm} à \SI{100}{m} jusqu'à \SI{-113.7}{dBm} à \SI{10}{km}, soit
+\SI{20}{dB} par décade de distance : c'est la signature d'une propagation en
+espace libre (exposant d'affaiblissement $n=2$). La puissance d'émission de
+\SI{30}{dBm} est répartie sur $25\times12=300$ éléments de ressource, d'où une
+puissance de référence par élément de $30-10\log_{10}300 \approx \SI{5.2}{dBm}$,
+et
+\[
+  \mathrm{RSRP}(d) \approx 5{,}2 - 20\log_{10}\!\left(\frac{4\pi d f}{c}\right)
+  \quad\text{avec } f=\SI{2.12}{GHz},
+\]
+soit $-73{,}7$~dBm à \SI{100}{m} et $-113{,}7$~dBm à \SI{10}{km}, ce qui
+coïncide avec les valeurs simulées (tableau~\ref{tab:A-q4}). Cette vérification
+analytique valide la chaîne de mesure (traces PHY, moyenne en puissance linéaire).
+La décroissance est très rapide au voisinage de l'eNodeB (\SI{-10}{dB} entre
+\SI{100}{m} et \SI{300}{m}) puis de plus en plus lente en échelle linéaire.
+
+\paragraph{Le débit ne se dégrade qu'au-delà d'un seuil.} La
+figure~\ref{fig:A-q4-debit} montre trois régimes :
+\begin{enumerate}[nosep]
+\item \emph{Plateau} : jusqu'à environ \SI{4}{km} dans les deux sens (et
+jusqu'à \SI{6}{km} en descendant), le débit reste égal à la charge offerte
+($\approx\SI{8.4}{Mb/s}$), alors que le RSRP a déjà perdu plus de \SI{30}{dB}.
+Ce n'est pas contradictoire : la \emph{modulation et le codage adaptatifs}
+(AMC) compensent la baisse du SINR en choisissant un MCS plus robuste (donc moins
+efficace spectralement). Tant que la capacité résultante reste supérieure à
+\SI{8.4}{Mb/s}, tout le trafic est écoulé.
+\item \emph{Dégradation} : lorsque la capacité de la cellule devient inférieure
+à la charge offerte, les tampons RLC se remplissent puis débordent ; les
+paquets en excès sont perdus et le débit mesuré est égal à la capacité
+disponible, qui décroît avec la distance.
+\item \emph{Faible débit} : à \SI{10}{km}, il ne reste que \SI{6.2}{Mb/s} en
+descendant (environ $-27\,\%$) et \SI{3.5}{Mb/s} en montant (environ
+$-59\,\%$).
+\end{enumerate}
+
+\paragraph{Asymétrie montant/descendant.} Le débit montant se dégrade
+nettement plus tôt (dès \SI{5}{km}) que le débit descendant (vers \SI{7}{km}).
+La raison est le bilan de liaison : l'UE émet à \SI{10}{dBm} contre \SI{30}{dBm}
+pour l'eNodeB, soit \SI{20}{dB} de moins. À distance égale, le SINR en réception
+à l'eNodeB est donc nettement plus faible que celui reçu par l'UE : le lien
+montant est le facteur limitant de la couverture, comme dans les réseaux réels.
+
+\paragraph{Paliers.} Les courbes ne décroissent pas de façon continue mais par
+paliers (par exemple \SI{4.95}{Mb/s} à \SI{6}{km} et \SI{7}{km} en montant,
+\SI{7.2}{Mb/s} à \SI{8}{km} et \SI{9}{km} en descendant) : le MCS et la taille
+du bloc de transport ne prennent que des valeurs discrètes.
+
+\paragraph{Limites du modèle.} Le modèle de Friis ne comporte ni obstacles, ni
+ombrage, ni évanouissements, ni interférences (une seule cellule). Il est très
+optimiste : une cellule réelle en milieu urbain ne dépasse pas quelques
+kilomètres, et la dégradation y serait plus rapide (exposant d'affaiblissement
+de 3 à 4) et plus brutale.
+
+% ==================================================
+\section{Question 5 --- Mobilité \texttt{RandomWalk2dMobilityModel}}
+% ==================================================
+
+\subsection{Configuration}
+
+L'UE suit désormais un modèle de marche aléatoire à vitesse constante. Il est
+placé initialement à \SI{5000}{m} de l'eNodeB, distance à partir de laquelle la
+qualité du lien commence à dépendre de la position (question~4), et se déplace
+dans un domaine de $20\times\SI{20}{km}$ centré sur l'eNodeB. Le mode
+\texttt{Distance} impose un changement de direction aléatoire tous les
+\SI{2000}{m}.
+
+\begin{lstlisting}[language=C++]
+ueMobility.SetMobilityModel("ns3::RandomWalk2dMobilityModel",
+    "Bounds", RectangleValue(Rectangle(-10000, 10000, -10000, 10000)),
+    "Speed",  StringValue("ns3::ConstantRandomVariable[Constant=<v>]"),
+    "Mode",   StringValue("Distance"),
+    "Distance", DoubleValue(2000.0));
+\end{lstlisting}
+
+\subsection{Protocole expérimental}
+
+Les directions successives de l'UE sont tirées aléatoirement : le résultat d'une
+seule simulation dépend de la trajectoire tirée et n'est pas représentatif
+(remarque méthodologique de l'énoncé). Chaque vitesse est donc simulée
+\emph{cinq fois} avec des flux aléatoires indépendants. Le programme
+\texttt{tp3\_q5\_parallel.cc} reçoit pour cela un paramètre \texttt{--run} :
+
+\begin{lstlisting}[language=C++]
+cmd.AddValue("run", "RNG run number", run);
+cmd.Parse(argc, argv);
+RngSeedManager::SetSeed(1);    // graine fixe
+RngSeedManager::SetRun(run);   // numero de run : flux independants
+\end{lstlisting}
+
+La graine reste fixée à~1 et seul le numéro de run varie de 1 à 5 : c'est la
+méthode recommandée par NS-3 pour obtenir des réplications indépendantes. Le
+script \texttt{tp3\_q5\_sweep.py} compile le programme une seule fois, puis
+lance les $5\ \text{vitesses}\times 5\ \text{runs}=25$ simulations de
+\SI{300}{s} (vitesses 5, 10, 20, 30 et \SI{50}{m/s}), six processus au plus en
+parallèle, chacune dans son propre répertoire de sortie. Les débits moyens
+(octets reçus $\times 8$ divisés par la durée utile de \SI{299.5}{s}) et les
+taux de perte sont obtenus avec FlowMonitor. Pour chaque vitesse, on reporte la
+moyenne, l'écart-type empirique $\sigma$ (diviseur $n-1$) et la demi-largeur de
+l'intervalle de confiance à 95\,\%, $t_{0{,}975;4}\,\sigma/\sqrt{5}$ avec
+$t_{0{,}975;4}=2{,}776$ (loi de Student, 4 degrés de liberté).
+
+\subsection{Évolution au cours du temps}
+
+Les figures~\ref{fig:A-q5-dist} et~\ref{fig:A-q5-debit} donnent la distance
+UE--eNodeB et les débits RLC instantanés pour une trajectoire particulière
+(simulation à \SI{50}{m/s}, run~1) : les segments de \SI{2000}{m} sont
+parcourus en \SI{40}{s}.
+
+\capture{img/A/q5-distance-temps.png}{Distance UE--eNodeB au cours du temps
+(RandomWalk2d, \SI{50}{m/s}, run~1 ; segments de \SI{2000}{m} parcourus en
+\SI{40}{s}).}{fig:A-q5-dist}
+
+\capture{img/A/q5-debit-temps.png}{Débit RLC descendant (haut) et montant
+(bas) au cours du temps pour la trajectoire de la figure~\ref{fig:A-q5-dist}.}{fig:A-q5-debit}
+
+On retrouve directement les résultats de la question~4 : le débit instantané ne
+dépend que de la distance courante, et suit les mêmes paliers.
+\begin{itemize}[nosep]
+\item Au départ ($d=\SI{5}{km}$), le débit montant vaut \SI{6.45}{Mb/s}, comme
+dans la figure~\ref{fig:A-q4-debit}. Il tombe à \SI{4.95}{Mb/s} vers $t=19$~s
+(distance proche de \SI{6}{km}), puis à \SI{4.4}{Mb/s} lorsque l'UE atteint la
+zone la plus éloignée (près de \SI{7.5}{km} à \SI{7.9}{km}).
+\item Le débit descendant chute de \SI{8.45}{Mb/s} à \SI{7.7}{Mb/s} à $t\approx26$~s,
+quand l'UE franchit environ \SI{6.2}{km}, et remonte à $t\approx119$~s, lorsqu'il
+repasse sous cette même distance : le même seuil est donc franchi dans les deux
+sens.
+\item Quand l'UE se rapproche de l'eNodeB (fin de simulation, $d<\SI{4.3}{km}$),
+les deux débits reviennent à la charge offerte. L'oscillation du montant en fin
+de trace est celle déjà observée à la question~3.
+\item À la reprise après une zone dégradée, on observe un pic bref
+(\SI{8.6}{Mb/s} vers $t=119$~s) : les paquets accumulés dans les tampons sont
+évacués d'un coup.
+\end{itemize}
+
+\subsection{Effet de la vitesse (moyenne sur 5 runs)}
+
+\capture{img/A/q5-debit-vitesse.png}{Débit moyen descendant et montant en
+fonction de la vitesse de l'UE (moyenne $\pm$ écart-type sur 5 runs,
+FlowMonitor).}{fig:A-q5-vitesse}
+
+\capture{img/A/q5-pertes-vitesse.png}{Taux de perte de paquets en fonction
+de la vitesse de l'UE (moyenne $\pm$ écart-type sur 5 runs).}{fig:A-q5-pertes}
+
+\begin{table}[H]
+\centering
+\caption{Débit moyen sur \SI{300}{s} en fonction de la vitesse de l'UE :
+moyenne, écart-type $\sigma$ et demi-largeur de l'IC à 95\,\% sur 5 runs
+(Mb/s).}
+\label{tab:A-q5}
+\small
+\begin{tabular}{rcccccc}
+\toprule
+ & \multicolumn{3}{c}{Descendant} & \multicolumn{3}{c}{Montant} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+Vitesse (m/s) & Moyenne & $\sigma$ & IC\,95\,\% & Moyenne & $\sigma$ & IC\,95\,\% \\
+\midrule
+5  & 8,38 & 0,05 & $\pm 0{,}07$ & 6,16 & 0,28 & $\pm 0{,}34$ \\
+10 & 8,18 & 0,16 & $\pm 0{,}20$ & 5,70 & 0,29 & $\pm 0{,}36$ \\
+20 & 8,07 & 0,23 & $\pm 0{,}29$ & 5,53 & 0,49 & $\pm 0{,}61$ \\
+30 & 7,98 & 0,42 & $\pm 0{,}52$ & 5,55 & 0,80 & $\pm 0{,}99$ \\
+50 & 7,79 & 0,61 & $\pm 0{,}75$ & 5,50 & 1,22 & $\pm 1{,}52$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Taux de perte de paquets en fonction de la vitesse de l'UE : moyenne,
+écart-type $\sigma$ et demi-largeur de l'IC à 95\,\% sur 5 runs (\%).}
+\label{tab:A-q5-pertes}
+\small
+\begin{tabular}{rcccccc}
+\toprule
+ & \multicolumn{3}{c}{Descendant} & \multicolumn{3}{c}{Montant} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+Vitesse (m/s) & Moyenne & $\sigma$ & IC\,95\,\% & Moyenne & $\sigma$ & IC\,95\,\% \\
+\midrule
+5  & 0,3 & 0,5 & $\pm 0{,}6$ & 25,7 & 3,0  & $\pm 3{,}8$ \\
+10 & 2,6 & 1,8 & $\pm 2{,}3$ & 30,9 & 3,4  & $\pm 4{,}2$ \\
+20 & 4,0 & 2,6 & $\pm 3{,}2$ & 33,2 & 5,4  & $\pm 6{,}7$ \\
+30 & 4,8 & 4,6 & $\pm 5{,}7$ & 32,9 & 8,8  & $\pm 10{,}9$ \\
+50 & 7,1 & 7,0 & $\pm 8{,}6$ & 33,4 & 13,7 & $\pm 17{,}0$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Résultats individuels des 25 simulations : débit descendant / débit
+montant (Mb/s).}
+\label{tab:A-q5-runs}
+\footnotesize
+\begin{tabular}{rccccc}
+\toprule
+Vitesse (m/s) & Run 1 & Run 2 & Run 3 & Run 4 & Run 5 \\
+\midrule
+5  & 8,33 / 5,88 & 8,31 / 5,85 & 8,42 / 6,42 & 8,42 / 6,42 & 8,42 / 6,23 \\
+10 & 8,01 / 5,40 & 8,00 / 5,39 & 8,31 / 6,00 & 8,27 / 5,94 & 8,31 / 5,79 \\
+20 & 7,86 / 5,01 & 8,20 / 5,84 & 8,09 / 5,52 & 7,82 / 5,11 & 8,36 / 6,19 \\
+30 & 8,04 / 5,39 & 8,18 / 5,82 & 8,03 / 5,41 & 7,28 / 4,45 & 8,38 / 6,66 \\
+50 & 8,19 / 6,08 & 7,94 / 5,39 & 7,54 / 4,81 & 6,86 / 4,02 & 8,39 / 7,22 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Stabilité de la connexion.} Dans aucune des 25 simulations la
+connexion n'est rompue : l'UE reste attaché à l'unique eNodeB et les débits
+moyens restent supérieurs à \SI{6.8}{Mb/s} en descendant et à \SI{4.0}{Mb/s}
+en montant (tableau~\ref{tab:A-q5-runs}), ce qui exclut toute coupure
+prolongée. La dégradation est progressive et réversible, conformément au
+modèle de propagation sans évanouissements. Elle se manifeste par les pertes de
+paquets, en moyenne de \SI{0.3}{\%} à \SI{7.1}{\%} en descendant et de
+\SI{26}{\%} à \SI{33}{\%} en montant selon la vitesse ; les valeurs extrêmes
+d'un run atteignent \SI{17.9}{\%} en descendant et \SI{50.3}{\%} en montant
+(\SI{50}{m/s}, run~4), à comparer à l'absence totale de perte à courte distance.
+
+\paragraph{Tendance moyenne.} Contrairement à ce que donnerait une exécution
+unique, la moyenne sur 5 runs décroît de façon régulière avec la vitesse
+(figures~\ref{fig:A-q5-vitesse} et~\ref{fig:A-q5-pertes}) : le débit descendant
+passe de \SI{8.38}{Mb/s} à \SI{7.79}{Mb/s} (environ $-7\,\%$) quand la vitesse
+passe de 5 à \SI{50}{m/s}, et les pertes descendantes de \SI{0.3}{\%} à
+\SI{7.1}{\%}. En montant, le débit passe de \SI{6.16}{Mb/s} à \SI{5.50}{Mb/s}
+(environ $-11\,\%$), mais la baisse est concentrée entre 5 et \SI{20}{m/s} : au-delà,
+les moyennes sont indiscernables (\SIrange{5.50}{5.55}{Mb/s}, pertes autour de
+\SI{33}{\%}). À titre de comparaison, le run~1 seul
+(tableau~\ref{tab:A-q5-runs}, première colonne) donne
+\num{8.33}, \num{8.01}, \num{7.86}, \num{8.04} puis \SI{8.19}{Mb/s} en
+descendant : une courbe en « V » non monotone, qui aurait conduit à une
+conclusion erronée si une seule trajectoire avait été simulée.
+
+\paragraph{Pourquoi la moyenne diminue.} NS-3 ne modélise pas, par défaut,
+l'effet Doppler ni les évanouissements rapides : la qualité du lien ne dépend
+que de la \emph{distance instantanée} (figure~\ref{fig:A-q5-debit}). La
+vitesse n'agit donc que sur l'étendue de l'espace explorée en \SI{300}{s}. À
+\SI{5}{m/s}, l'UE ne parcourt que \SI{1.5}{km}, donc moins d'un segment : il
+reste dans un anneau de \SI{5}{km} à environ \SI{6.5}{km} où la qualité varie
+peu. À \SI{50}{m/s}, il parcourt \SI{15}{km} (sept segments) et explore tout le
+domaine. L'UE part en bordure de la zone où le débit est égal à la charge
+offerte : une trajectoire qui le rapproche de l'eNodeB ne peut pas relever le
+débit au-delà de \SI{8.4}{Mb/s} (plafond fixé par la source), alors qu'une
+trajectoire qui l'en éloigne le fait chuter par paliers (question~4). Plus
+l'UE explore, plus l'asymétrie « gain plafonné, perte non bornée » tire la
+moyenne vers le bas. Cette explication est cohérente avec la saturation observée
+en montant, où l'UE franchit déjà le seuil de dégradation à \SI{5}{km}, mais
+reste une interprétation du modèle et non un résultat mesuré directement.
+
+\paragraph{Variabilité entre graines.} L'écart-type augmente fortement avec
+la vitesse : il est multiplié par environ 11 en descendant ($0{,}05$ à
+$\SI{0.61}{Mb/s}$) et par 4 en montant ($0{,}28$ à $\SI{1.22}{Mb/s}$). À faible
+vitesse, la trajectoire est quasiment déterminée par la première direction
+tirée ; à grande vitesse, le résultat dépend de toute la ligne brisée, qui
+diffère fortement d'un run à l'autre. Le tableau~\ref{tab:A-q5-runs} le
+montre : le run~5 reste excellent à toutes les vitesses (descendant entre
+\num{8.31} et \SI{8.42}{Mb/s} et montant en hausse jusqu'à \SI{7.22}{Mb/s} à
+\SI{50}{m/s}, signe d'une trajectoire qui revient vers l'eNodeB), alors que le
+run~4 se dégrade régulièrement (descendant de \num{8.42} à \SI{6.86}{Mb/s}, montant de
+\num{6.42} à \SI{4.02}{Mb/s}). À \SI{5}{m/s}, les runs~3 et~4 donnent des
+valeurs identiques : sur un seul segment de \SI{1.5}{km}, les deux directions
+tirées maintiennent l'UE dans la même zone de qualité (même palier de MCS).
+
+\paragraph{Variabilité comparée à l'effet de la vitesse.} L'effet moyen de la
+vitesse reste du même ordre que la dispersion entre graines. Entre 5 et
+\SI{50}{m/s}, la baisse moyenne du débit descendant est de \SI{0.59}{Mb/s},
+alors que l'écart-type à \SI{50}{m/s} est de \SI{0.61}{Mb/s} et que l'écart
+entre le meilleur et le pire run à cette vitesse atteint \SI{1.53}{Mb/s}
+(soit environ 2,6 fois l'effet moyen). Les intervalles de confiance à 95\,\%
+des vitesses 5 et \SI{50}{m/s} ($8{,}38 \pm 0{,}07$~Mb/s et
+$7{,}79 \pm 0{,}75$~Mb/s) se recouvrent. Des tests de Welch (cinq valeurs par
+vitesse) donnent, en descendant, $p\approx0{,}05$ entre 5 et \SI{10}{m/s},
+$p\approx0{,}04$ entre 5 et \SI{20}{m/s} et $p\approx0{,}10$ entre 5 et
+\SI{50}{m/s} ; une analyse de variance sur les cinq vitesses n'est pas
+significative ($p\approx0{,}14$ en descendant, $p\approx0{,}58$ en montant).
+En montant, seule la différence entre \SI{5}{m/s} et les vitesses de 10 et
+\SI{20}{m/s} est à la limite de la significativité ($p\approx0{,}03$ à $0{,}05$) ;
+entre 20 et \SI{50}{m/s}, aucune différence n'est décelable ($p\approx0{,}96$).
+Avec seulement cinq runs par configuration et sans correction pour les
+comparaisons multiples, ces tests ont une faible puissance : la décroissance
+du débit avec la vitesse est cohérente et plausible, mais elle n'est
+établie que de façon modérée. Pour la confirmer, il faudrait davantage de
+runs, d'autant que la dispersion entre graines croît avec la vitesse. En
+conditions réelles, une vitesse plus élevée dégraderait en plus le lien (effet
+Doppler, évanouissements rapides, handovers plus fréquents), ce que ce scénario
+à une seule cellule ne reproduit pas.
+
+% ==================================================
+\section{Question 6 --- Deux eNodeB, interface X2 et handover}
+% ==================================================
+
+\subsection{Scénario}
+
+Un second eNodeB est ajouté. Les deux stations sont placées en
+$(0,0,0)$ et $(500,0,0)$ ; l'UE démarre en $(-100,0,0)$ et se déplace en ligne
+droite à \SI{10}{m/s} le long de l'axe $x$ (\texttt{ConstantVelocityMobilityModel})
+pendant \SI{100}{s}. Sa trajectoire traverse donc successivement les deux
+cellules : il passe à la verticale de l'eNodeB~1 à $t=10$~s, du point
+équidistant ($x=250$~m) à $t=35$~s, puis de l'eNodeB~2 à $t=60$~s. L'interface X2
+est activée avec \texttt{AddX2Interface()} et le handover automatique est
+déclenché par l'algorithme \texttt{A2A4RsrqHandoverAlgorithm}, paramétré comme
+dans l'énoncé :
+
+\begin{lstlisting}[language=C++, basicstyle=\ttfamily\footnotesize]
+lteHelper->SetHandoverAlgorithmType("ns3::A2A4RsrqHandoverAlgorithm");
+lteHelper->SetHandoverAlgorithmAttribute("ServingCellThreshold",
+                                         UintegerValue(30));
+lteHelper->SetHandoverAlgorithmAttribute("NeighbourCellOffset",
+                                         UintegerValue(1));
+...
+lteHelper->AddX2Interface(enbNodes);
+lteHelper->Attach(ueLteDevs.Get(0), enbLteDevs.Get(0)); // initial: eNodeB 1
+
+Config::ConnectWithoutContext(
+    "/NodeList/*/DeviceList/*/LteEnbRrc/HandoverStart",
+    MakeCallback(&NotifyHandoverStart));
+Config::ConnectWithoutContext(
+    "/NodeList/*/DeviceList/*/LteUeRrc/HandoverEndOk",
+    MakeCallback(&NotifyHandoverEndOk));
+\end{lstlisting}
+
+Les callbacks \texttt{HandoverStart} et \texttt{HandoverEndOk} (traces RRC)
+affichent l'instant du handover ; la distance de l'UE aux deux eNodeB et le
+débit (par fenêtres de \SI{100}{ms}, via FlowMonitor) sont enregistrés en
+parallèle.
+
+\subsection{Résultats}
+
+Le handover se produit à $t=\SI{35.84}{s}$ : l'UE quitte l'eNodeB~1 pour
+l'eNodeB~2. Il n'y en a qu'un seul sur toute la trajectoire. Même après avoir
+dépassé l'eNodeB~2 ($t>60$~s), l'UE reste attaché à celui-ci, car il en est
+toujours plus proche que de l'eNodeB~1.
+
+\capture{img/A/q6-distances.png}{Distances de l'UE aux deux eNodeB. La
+droite verticale marque l'instant du handover ($t=\SI{35.84}{s}$).}{fig:A-q6-dist}
+
+\capture{img/A/q6-rsrp.png}{RSRP mesuré par l'UE sur sa cellule serveuse
+(eNodeB~1 puis eNodeB~2) ; le handover a lieu à $t=\SI{35.84}{s}$.}{fig:A-q6-rsrp}
+
+\capture{img/A/q6-debit-handover.png}{Débits descendant et montant autour du
+handover (fenêtres de \SI{100}{ms}).}{fig:A-q6-debit}
+
+\begin{table}[H]
+\centering
+\caption{Synthèse du handover.}
+\label{tab:A-q6}
+\small
+\begin{tabular}{@{}ll@{}}
+\toprule
+Instant du handover & \SI{35.84}{s} (position de l'UE : $x=\SI{258.4}{m}$) \\
+Distance à l'eNodeB 1 / eNodeB 2 & \SI{258.4}{m} / \SI{241.6}{m} \\
+RSRP de la cellule source (juste avant) & $\approx -82{,}0$~dBm \\
+RSRP de la cellule cible (juste après) & $\approx -81{,}4$~dBm \\
+Débit descendant (nominal $\to$ minimum) & $\approx 8{,}4 \to 8{,}2$~Mb/s ($\approx -3\,\%$) \\
+Débit montant (nominal $\to$ minimum) & $\approx 8{,}4 \to 4{,}6$~Mb/s ($\approx -45\,\%$) \\
+Durée de la perturbation & une seule fenêtre de \SI{100}{ms} touchée (moins de \SI{200}{ms}) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Interprétation}
+
+\paragraph{Instant du handover.} Le point équidistant des deux stations
+($x=\SI{250}{m}$) est atteint à $t=35$~s, alors que le handover n'est déclenché
+qu'à $t=\SI{35.84}{s}$, soit \SI{0.84}{s} (environ \SI{8}{m}) plus tard. Ce
+retard est voulu : l'algorithme A2-A4 sur le RSRQ n'agit pas dès que la cellule
+voisine est meilleure. Il faut que la qualité (RSRQ) de la cellule serveuse
+passe sous le seuil \texttt{ServingCellThreshold} (événement A2), puis que celle
+d'une voisine dépasse la cellule serveuse d'au moins \texttt{NeighbourCellOffset}
+(événement A4), et ces mesures sont lissées et rapportées périodiquement. Cette
+hystérésis évite l'effet « ping-pong » (bascules répétées) près de la frontière
+des cellules. À l'instant du handover, la cellule cible est reçue à
+$\approx-81{,}5$~dBm contre $\approx-82{,}0$~dBm pour la cellule source (valeurs
+de Friis aux distances de \SI{241.6}{m} et \SI{258.4}{m}) : la cible est à peine
+meilleure, mais le handover est déjà déclenché.
+
+\paragraph{Impact sur le RSRP.} Le RSRP de la cellule serveuse (figure~\ref{fig:A-q6-rsrp})
+est continu à la bascule : la cellule~1 est suivie à $\approx-82$~dBm
+puis la cellule~2 à $\approx-81{,}4$~dBm, soit un saut de moins de
+\SI{1}{dB}. Cela confirme que le handover est déclenché dans la zone où les deux
+cellules sont équivalentes ; l'UE ne subit donc aucune dégradation radio du fait
+de la bascule. Les deux pics à $+5$~dBm ($t=10$~s et $t=60$~s) sont des
+artefacts du scénario : la trajectoire passe exactement à la verticale des
+antennes ($d=0$), où le modèle de Friis sature sans perte de propagation. Ils
+n'ont pas de sens physique (pas de hauteur d'antenne dans le modèle) et ne
+doivent pas être interprétés. Après le handover, le RSRP de la cellule~2 augmente
+jusqu'au pic de $t=60$~s puis décroît ($\approx-85{,}7$~dBm à $t=100$~s,
+$d=\SI{390}{m}$).
+
+\paragraph{Impact sur le débit.} La figure~\ref{fig:A-q6-debit} montre que la
+bascule ne provoque qu'une perturbation très brève : une seule fenêtre de
+\SI{100}{ms} est touchée, avec un creux d'environ $-3\,\%$ en descendant et de
+près de $-45\,\%$ en montant (\SI{4.6}{Mb/s}), immédiatement suivi d'un retour
+au nominal avec un léger dépassement (\SI{8.85}{Mb/s}) correspondant à
+l'évacuation des paquets retardés. L'asymétrie entre les deux sens s'explique
+par la procédure de handover : les paquets descendants en attente dans
+l'eNodeB source sont retransmis à l'eNodeB cible via X2, tandis que, côté
+montant, l'UE ne peut recommencer à émettre qu'après son accès aléatoire (RACH)
+sur la cellule cible. La précision de cette mesure est limitée par la fenêtre
+d'observation de \SI{100}{ms} : la vraie durée d'interruption est de l'ordre de
+quelques dizaines de millisecondes à une centaine de millisecondes.
+
+\paragraph{Remarque pour la suite du TP.} Pour la comparaison avec la bascule
+WiFi/LTE de la partie~B (question~4), ce handover intra-LTE fournit la valeur de
+référence suivante : interruption inférieure à \SI{200}{ms}, creux montant
+d'environ 45\,\% (donc légèrement au-dessus du seuil de 50\,\% de la
+définition de l'énoncé) et quasi nul en descendant.
+
+% ==================================================
+\section{Synthèse de la partie A}
+% ==================================================
+
+\begin{itemize}[nosep]
+\item \textbf{Architecture.} La connectivité de bout en bout est vérifiée (ping,
+TTL = 63) ; l'EPC simulé se compose de la SGW/PGW (regroupées), d'une MME
+simplifiée et des interfaces S1-U (GTP-U) et X2.
+\item \textbf{Débit en régime nominal.} \SI{8.45}{Mb/s} dans les deux sens,
+égal à la charge offerte : la cellule n'est pas saturée.
+\item \textbf{Distance.} Le RSRP suit la loi de Friis (\SI{20}{dB} par décade).
+L'AMC maintient le débit jusqu'à environ \SI{4}{km} (\SI{6}{km} en descendant) ;
+au-delà, le débit chute par paliers, plus tôt en montant à cause de la
+puissance d'émission de l'UE.
+\item \textbf{Mobilité.} Sans évanouissements ni effet Doppler, le débit ne
+dépend que de la distance instantanée ; la vitesse n'agit que sur l'étendue de
+l'espace parcouru. Sur 5 runs par vitesse, le débit moyen décroît légèrement
+avec la vitesse (descendant : \num{8.38} à \SI{7.79}{Mb/s} ; montant :
+\num{6.16} à \SI{5.50}{Mb/s}), mais la dispersion entre graines, qui croît avec
+la vitesse, est du même ordre que cet effet : la tendance n'est que
+modérément établie statistiquement.
+\item \textbf{Handover.} Un seul handover automatique (A2-A4 sur RSRQ), déclenché à
+\SI{35.84}{s} avec un léger retard par rapport au point équidistant, sans effet
+notable sur le RSRP et avec une interruption inférieure à \SI{200}{ms} (surtout
+visible en montant).
+\end{itemize}
