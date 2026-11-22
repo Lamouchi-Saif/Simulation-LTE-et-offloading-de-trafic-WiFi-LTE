@@ -1,3 +1,4 @@
+
 % ============================================================
 % TP3 - PARTIE B : CRITERE ORIENTE TERMINAL
 % Questions B1 a B4 - Yassine
@@ -22,7 +23,9 @@ La question B3 introduit la décision de bascule fondée sur la
 distance et mesure le débit reçu. Enfin, la question B4
 analyse les interruptions autour des changements d'interface.
 
+% ============================================================
 \section{Question 1 : Mise en place du scénario LTE/Wi-Fi}
+% ============================================================
 
 \subsection{Objectif}
 
@@ -97,7 +100,6 @@ et le vecteur vitesse sont fixés respectivement à
 L'eNodeB et l'AP utilisent quant à eux un modèle de position
 constante.
 
-
 \capture{img/B/B1-configuration-mobilite.png}
 {Extrait du code configurant les positions et la mobilité de l'UE.}
 {fig:b1-mobilite}
@@ -143,7 +145,9 @@ de deux interfaces réseau et se déplace à vitesse constante
 la base des expériences de trafic et de bascule réalisées
 dans les questions suivantes.
 
+% ============================================================
 \section{Question 2 : Génération d'un trafic entre l'UE et un serveur distant}
+% ============================================================
 
 \subsection{Objectif}
 
@@ -238,8 +242,8 @@ transmis et aucune perte n'est reportée pour ce flux.
 Le délai moyen observé est d'environ $21,93$ ms.
 
 Le débit calculé par FlowMonitor peut être légèrement
-différent du débit applicatif nominal, car il dépend de
-la durée effective utilisée dans le calcul statistique
+différent du débit applicatif nominal, car il dépend
+de la durée effective utilisée dans le calcul statistique
 et des instants de transmission et de réception retenus.
 
 Il est important de noter que, dans cette configuration
@@ -259,7 +263,9 @@ nécessaires à l'analyse. Le flux de référence traverse
 initialement le réseau LTE ; la question suivante introduit
 le changement dynamique de route vers le Wi-Fi.
 
+% ============================================================
 \section{Question 3 : Offloading fondé sur la distance}
+% ============================================================
 
 \subsection{Objectif}
 
@@ -416,143 +422,160 @@ s'en éloigne. Les mesures FlowMonitor distinguent les
 deux chemins utilisés et le fichier CSV permet de suivre
 le débit au cours du temps.
 
-\section{Question 4 : Mesure des interruptions lors des bascules}
+% ============================================================
+\section{Question 4 : Mesure de l'interruption de service lors des bascules}
+% ============================================================
 
-\subsection{Objectif}
+\subsection{Objectif et méthode de mesure}
 
-La question B4 vise à quantifier l'impact des changements
-d'interface sur la continuité du trafic. Nous observons
-le débit reçu, les pertes estimées et le délai maximal
-autour des deux transitions LTE/Wi-Fi.
+L'objectif de cette expérience est d'évaluer l'impact des changements
+d'accès réseau LTE/Wi-Fi sur la continuité du service. Nous mesurons
+la durée pendant laquelle le débit reçu devient inférieur à 50\,\%
+du débit nominal de l'application.
 
-\subsection{Méthode de mesure}
+Le trafic applicatif est généré avec les paramètres suivants :
+\begin{itemize}
+    \item Taille des paquets UDP : 1024 octets ;
+    \item Intervalle entre deux paquets : 10 ms ;
+    \item Débit nominal : 0,8192 Mbit/s ;
+    \item Seuil minimal de débit : 0,4096 Mbit/s.
+\end{itemize}
 
-Le débit est mesuré sur des fenêtres de $100$ ms. Le débit
-nominal du trafic UDP est de $0,8192$ Mbit/s. Le seuil
-utilisé pour détecter une interruption est fixé à $50\%$
-du débit nominal :
-
-\[
-D_{\mathrm{seuil}}
-=
-0,5 \times 0,8192
-=
-0,4096\ \mathrm{Mbit/s}.
-\]
-
-Une fenêtre est considérée comme étant sous le seuil
-lorsque son débit mesuré est inférieur à
-$0,4096$ Mbit/s. La durée d'interruption est estimée
-en cumulant la durée des fenêtres sous ce seuil dans
-la période d'analyse entourant chaque bascule.
-
-Pour chaque transition, une fenêtre d'analyse de deux
-secondes est considérée, soit une seconde avant et une
-seconde après le changement de route. Le programme
-enregistre également le nombre de paquets transmis et
-reçus dans chaque intervalle, ainsi que le délai maximal
-calculé à partir de l'horodatage des paquets.
-
-\subsection{Horodatage des paquets}
-
-Afin de mesurer le délai de bout en bout, le programme
-utilise un en-tête \texttt{SeqTsHeader}. Cet en-tête
-contient notamment un numéro de séquence et un horodatage
-associé au paquet. À la réception, le délai est calculé
-par la différence entre l'instant courant de simulation
-et l'horodatage extrait du paquet :
+Le débit est évalué à l'aide d'une fenêtre glissante de 100 ms,
+recalculée toutes les 10 ms. Pour chaque instant $t$, le débit est
+calculé à partir des octets reçus pendant l'intervalle
+$[t-0,1\,;\,t[$ :
 
 \[
-\mathrm{Délai}
-=
-t_{\mathrm{réception}}-t_{\mathrm{émission}}.
+D(t)=\frac{8 \times B(t)}{0,1 \times 10^6}
 \]
 
-Le programme conserve le délai maximal observé dans
-chaque fenêtre de mesure. Les compteurs sont ensuite
-réinitialisés pour l'intervalle suivant.
+où $B(t)$ représente le nombre d'octets reçus dans la fenêtre
+considérée.
+
+Le seuil utilisé pour détecter une éventuelle interruption est :
+
+\[
+D_{\text{seuil}}=0,5 \times D_{\text{nominal}}
+=0,4096\ \text{Mbit/s}
+\]
+
+Une fenêtre est considérée comme étant sous le seuil lorsque
+son débit mesuré est inférieur à cette valeur.
 
 \capture{img/B/B4-code-mesures.png}
-{Extrait du code de mesure du débit, des pertes estimées et du délai.}
-{fig:b4-code}
+{Extrait du code implémentant la fenêtre glissante de 100 ms avec un pas de 10 ms.}
+{fig:b4-code-mesures}
 
-\subsection{Résultats autour des transitions}
+\subsection{Analyse des transitions}
 
-Les résultats obtenus par le programme sont résumés
-dans le tableau~\ref{tab:b4-resultats}. Le débit seuil
-est identique pour les deux transitions.
+Deux transitions sont étudiées dans le scénario :
+\begin{itemize}
+    \item LTE vers Wi-Fi à $t=14,5$ s, lorsque le terminal entre
+    dans la zone de couverture du point d'accès ;
+    \item Wi-Fi vers LTE à $t=26,5$ s, lorsque le terminal quitte
+    la zone de couverture Wi-Fi.
+\end{itemize}
+
+Pour chaque transition, l'analyse porte sur une période de deux
+secondes centrée sur l'instant de bascule.
 
 \begin{table}[H]
     \centering
-    \caption{Mesure des interruptions autour des bascules de B4}
-    \label{tab:b4-resultats}
-    \begin{tabular}{lcc}
-        \toprule
-        \textbf{Indicateur} & \textbf{LTE vers Wi-Fi} & \textbf{Wi-Fi vers LTE} \\
-        \midrule
+    \caption{Résultats de la mesure de l'interruption de service}
+    \label{tab:b4-interruption}
+    \begin{tabular}{|l|c|c|}
+        \hline
+        \textbf{Indicateur} & \textbf{LTE $\rightarrow$ Wi-Fi}
+        & \textbf{Wi-Fi $\rightarrow$ LTE} \\
+        \hline
         Instant de transition & 14,5 s & 26,5 s \\
-        Distance à la transition & 27,5 m & 32,5 m \\
-        Fenêtre d'analyse & 13,5--15,5 s & 25,5--27,5 s \\
-        Débit nominal & 0,8192 Mbit/s & 0,8192 Mbit/s \\
-        Seuil d'interruption & 0,4096 Mbit/s & 0,4096 Mbit/s \\
-        Durée sous le seuil & 0 s & 0 s \\
-        Pertes estimées dans la fenêtre & 0 & 0 \\
+        \hline
+        Période analysée & [13,5 ; 15,5] s & [25,5 ; 27,5] s \\
+        \hline
+        Durée mesurée sous le seuil & 0 s & 0 s \\
+        \hline
+        Paquets transmis & 200 & 200 \\
+        \hline
+        Paquets reçus & 200 & 200 \\
+        \hline
+        Paquets non reçus & 0 & 0 \\
+        \hline
         Délai maximal observé & 26 ms & 21 ms \\
-        \bottomrule
+        \hline
     \end{tabular}
 \end{table}
 
-Aucune fenêtre de mesure n'est passée sous le seuil
-de $0,4096$ Mbit/s autour des deux transitions. La durée
-d'interruption mesurée est donc nulle pour les deux
-changements. Le programme n'a pas non plus relevé de
-pertes estimées dans les fenêtres étudiées. Le délai
-maximal observé atteint $26$ ms pour la transition
-LTE vers Wi-Fi et $21$ ms pour la transition Wi-Fi
-vers LTE.
-
 \capture{img/B/B4-resultats-terminal.png}
-{Sortie terminal présentant l'analyse des interruptions pour les deux transitions.}
-{fig:b4-terminal}
+{Résultats de l'analyse des deux transitions LTE/Wi-Fi dans le terminal.}
+{fig:b4-resultats-terminal}
+
+\subsection{Analyse des résultats}
+
+Les résultats montrent qu'aucune fenêtre glissante de 100 ms
+n'a présenté un débit inférieur au seuil de 0,4096 Mbit/s
+pendant les deux périodes de transition étudiées.
+
+Pour la transition LTE vers Wi-Fi, les 200 paquets transmis
+pendant la période d'analyse ont tous été reçus. Le délai maximal
+observé est de 26 ms.
+
+De même, lors de la transition Wi-Fi vers LTE, les 200 paquets
+ont été reçus sans perte, avec un délai maximal de 21 ms.
+
+La durée estimée sous le seuil est donc de 0 seconde pour les
+deux transitions. Cela indique que le mécanisme de bascule
+maintient un débit supérieur au seuil dans les fenêtres mesurées.
+
+Il faut toutefois préciser que cette méthode repose sur des
+fenêtres de 100 ms. Elle ne permet donc pas d'exclure une
+dégradation très brève, d'une durée inférieure à la fenêtre
+d'observation, qui pourrait être masquée par le calcul du débit
+moyen.
 
 \capture{img/B/B4-csv.png}
-{Extrait du fichier CSV contenant les mesures par fenêtre de 100 ms.}
+{Extrait du fichier CSV contenant les mesures du débit, les interfaces et les délais.}
 {fig:b4-csv}
 
-\subsection{Précautions d'interprétation}
+\subsection{Évolution du débit pendant l'offloading}
 
-La durée d'interruption nulle signifie qu'aucune fenêtre
-de $100$ ms n'a présenté un débit inférieur au seuil
-choisi. Elle ne prouve pas qu'aucune perturbation
-inférieure à $100$ ms n'a pu se produire.
+La figure suivante présente l'évolution du débit reçu pendant
+la simulation. Elle fait apparaître le seuil de 50\,\% du débit
+nominal ainsi que les deux instants de bascule entre LTE et Wi-Fi.
 
-De plus, le nombre de pertes calculé séparément dans
-chaque fenêtre est une estimation fondée sur la différence
-entre les compteurs de paquets transmis et reçus dans
-cet intervalle. Un paquet transmis dans une fenêtre et
-reçu dans la suivante peut affecter cette estimation.
-Pour les pertes globales du flux, les statistiques
-FlowMonitor constituent la référence : les flux
-applicatifs LTE et Wi-Fi rapportent chacun zéro paquet
-perdu dans cette exécution.
+\capture{img/B/offloading-throughput.png}
+{Évolution du débit reçu pendant les transitions LTE/Wi-Fi.}
+{fig:b4-throughput}
 
-Enfin, cette expérience mesure les changements de route
-entre LTE et Wi-Fi. Elle ne constitue pas, à elle seule,
-une comparaison expérimentale avec un handover LTE
-intra-réseau ; une telle comparaison nécessiterait un
-scénario et des mesures dédiés.
+\subsection{Comparaison avec un handover intra-LTE}
+
+Dans un handover intra-LTE, le terminal passe d'un eNodeB à
+un autre tout en restant dans le réseau LTE. Le changement
+d'accès étudié dans cette expérience est différent : le terminal
+bascule entre deux technologies d'accès, LTE et Wi-Fi.
+
+Les deux mécanismes ont pour objectif de maintenir la
+connectivité pendant le déplacement du terminal. Cependant,
+les résultats de cette expérience ne constituent pas une
+comparaison expérimentale directe avec un handover intra-LTE,
+car aucun scénario de handover entre deux eNodeB n'a été
+exécuté dans cette partie.
 
 \subsection{Conclusion de B4}
 
-Dans le scénario et avec la résolution de mesure retenus,
-les deux bascules n'entraînent pas d'interruption détectée
-selon le seuil de $50\%$ du débit nominal. Le délai maximal
-observé reste de l'ordre de quelques dizaines de
-millisecondes. Cette conclusion doit être interprétée
-à l'échelle des fenêtres de $100$ ms utilisées par le
-programme.
+Cette expérience montre que les deux transitions LTE/Wi-Fi
+et Wi-Fi/LTE se sont déroulées sans perte de paquets dans
+les périodes analysées. Aucune fenêtre glissante de 100 ms
+n'a présenté un débit inférieur à 50\,\% du débit nominal.
 
-\section{Bilan de la partie 1--4}
+Le mécanisme d'offloading implémenté permet ainsi de conserver
+un débit mesuré supérieur au seuil défini pendant les deux
+transitions étudiées, tout en maintenant la réception des
+paquets applicatifs.
+
+% ============================================================
+\section{Bilan de la partie B1--B4}
+% ============================================================
 
 Les questions B1 à B4 ont permis de construire un scénario
 combinant LTE et Wi-Fi, d'y générer un trafic UDP continu,
@@ -573,6 +596,7 @@ de bascules répétées à proximité de la frontière de
 couverture, motivent l'étude de l'hystérésis et des
 paramètres de mobilité présentée dans les questions
 suivantes.
+
 % ============================================================
 % FIN B1-B4
 % ============================================================
