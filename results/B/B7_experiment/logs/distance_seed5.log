@@ -1,0 +1,3 @@
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+[distance_seed5] crit=distance R=50 H=2 v=5 b=1.2399 run=1 | bascules=20 (pingpong=19) offloadTx=0.5064 offloadRx=0.5064 sendErrors=0 theorie=-1 CV=0.00846248 perte=0%

@@ -7,7 +7,7 @@ set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 NS3_DIR="${NS3_DIR:-$HOME/ns-3.48}"
-SOURCE_FILE="${SOURCE_FILE:-$NS3_DIR/script/tp3/tp3-offload.cc}"
+SOURCE_FILE="${SOURCE_FILE:-$NS3_DIR/scratch/tp3-offload.cc}"
 NS3_BIN="$NS3_DIR/ns3"
 
 RADIUS="${RADIUS:-50}"
@@ -36,7 +36,6 @@ OUT_DIR="${OUT_DIR:-$NS3_DIR/results/tp3/B7_experiment}"
 [[ "$BUILD" == 0 || "$BUILD" == 1 ]] || { echo "ERREUR: BUILD doit valoir 0 ou 1." >&2; exit 1; }
 
 mkdir -p "$NS3_DIR/scratch" "$OUT_DIR/logs"
-cp "$SOURCE_FILE" "$NS3_DIR/scratch/tp3-offload.cc"
 cd "$NS3_DIR"
 
 if [[ "$BUILD" == 1 ]]; then
