@@ -1,1 +1,580 @@
 \chapter{Partie B: }
+
+% ============================================================
+% TP3 - PARTIE B : CRITERE ORIENTE TERMINAL
+% Questions B1 a B4 - Yassine
+% ============================================================
+
+\chapter{Partie B : Offloading LTE/Wi-Fi selon la distance}
+\label{chap:partie-b-yassine}
+
+\section{Introduction}
+
+Cette partie porte sur la mise en place d'un mécanisme de
+\textit{Wi-Fi offloading} piloté par l'équipement utilisateur
+(\textit{User Equipment}, UE). Le principe consiste à faire
+passer le trafic de l'UE par le réseau LTE ou par le réseau
+Wi-Fi en fonction de sa distance par rapport au point d'accès
+(AP).
+
+Nous procédons progressivement. La question B1 met en place
+l'architecture LTE/Wi-Fi et la mobilité de l'UE. La question B2
+ajoute un trafic applicatif entre l'UE et un serveur distant.
+La question B3 introduit la décision de bascule fondée sur la
+distance et mesure le débit reçu. Enfin, la question B4
+analyse les interruptions autour des changements d'interface.
+
+\section{Question B1 : Mise en place du scénario LTE/Wi-Fi}
+
+\subsection{Objectif}
+
+L'objectif est de construire un scénario NS-3 comprenant :
+\begin{itemize}
+    \item une station de base LTE (\textit{eNodeB}) ;
+    \item un point d'accès Wi-Fi 802.11n ;
+    \item un UE possédant une interface LTE et une interface Wi-Fi ;
+    \item un modèle de mobilité permettant à l'UE de se déplacer
+    en ligne droite à vitesse constante.
+\end{itemize}
+
+Cette première étape vérifie la création des équipements,
+l'installation des piles réseau et l'attribution des adresses IP.
+Elle prépare le scénario qui sera utilisé dans les questions
+suivantes.
+
+\subsection{Architecture et paramètres}
+
+Le scénario contient un eNodeB placé en $(0,50,0)$ et un point
+d'accès Wi-Fi placé en $(0,0,0)$. L'UE démarre en $(-100,0,0)$
+et se déplace suivant l'axe $x$ avec une vitesse de $5$ m/s.
+La durée de simulation est de $40$ secondes.
+
+Le réseau Wi-Fi utilise la norme IEEE 802.11n et le SSID
+\texttt{offload-ap}. Les équipements Wi-Fi reçoivent leurs
+adresses dans le sous-réseau \texttt{10.0.1.0/24}. L'adresse
+LTE de l'UE est attribuée par l'infrastructure EPC.
+
+\begin{table}[H]
+    \centering
+    \caption{Paramètres du scénario de la question B1}
+    \label{tab:b1-parametres}
+    \begin{tabular}{ll}
+        \toprule
+        \textbf{Paramètre} & \textbf{Valeur} \\
+        \midrule
+        Nombre d'eNodeB & 1 \\
+        Nombre de points d'accès Wi-Fi & 1 \\
+        Nombre d'UE & 1 \\
+        Norme Wi-Fi & IEEE 802.11n \\
+        SSID & \texttt{offload-ap} \\
+        Position de l'eNodeB & $(0,50,0)$ m \\
+        Position de l'AP & $(0,0,0)$ m \\
+        Position initiale de l'UE & $(-100,0,0)$ m \\
+        Vitesse de l'UE & $5$ m/s suivant $+x$ \\
+        Durée de simulation & $40$ s \\
+        Sous-réseau Wi-Fi & \texttt{10.0.1.0/24} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Implémentation}
+
+Le réseau LTE est créé à l'aide de \texttt{LteHelper} et
+\texttt{PointToPointEpcHelper}. L'eNodeB et l'UE reçoivent
+leurs équipements LTE avec les méthodes
+\texttt{InstallEnbDevice()} et \texttt{InstallUeDevice()}.
+L'UE est ensuite attaché à la station de base avec
+\texttt{Attach()}.
+
+Pour le Wi-Fi, nous utilisons \texttt{WifiHelper},
+\texttt{WifiMacHelper} et \texttt{YansWifiPhyHelper}.
+L'UE est configuré comme station Wi-Fi (\texttt{StaWifiMac})
+et le point d'accès comme \texttt{ApWifiMac}. Les deux
+interfaces appartiennent au même réseau IP.
+
+La mobilité de l'UE est définie par
+\texttt{ConstantVelocityMobilityModel}. La position initiale
+et le vecteur vitesse sont fixés respectivement à
+\texttt{Vector(-100,0,0)} et \texttt{Vector(5,0,0)}.
+L'eNodeB et l'AP utilisent quant à eux un modèle de position
+constante.
+
+
+\capture{img/B/B1-configuration-mobilite.png}
+{Extrait du code configurant les positions et la mobilité de l'UE.}
+{fig:b1-mobilite}
+
+\subsection{Résultats et vérification}
+
+L'exécution de \texttt{offloading-q1.cc} affiche les adresses
+IP des deux interfaces de l'UE ainsi que celles du point
+d'accès. Les valeurs obtenues sont présentées dans le
+tableau~\ref{tab:b1-adresses}.
+
+\begin{table}[H]
+    \centering
+    \caption{Adresses IP affichées à l'exécution de B1}
+    \label{tab:b1-adresses}
+    \begin{tabular}{ll}
+        \toprule
+        \textbf{Équipement / interface} & \textbf{Adresse IP} \\
+        \midrule
+        UE -- LTE & \texttt{7.0.0.2} \\
+        UE -- Wi-Fi & \texttt{10.0.1.1} \\
+        Point d'accès -- Wi-Fi & \texttt{10.0.1.2} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+L'UE démarre bien à $(-100,0,0)$ et possède une vitesse
+de $(5,0,0)$ m/s. La simulation se termine correctement.
+Ces résultats valident la création des équipements et
+l'adressage des interfaces. À ce stade, cette question
+ne constitue pas encore une mesure de transfert applicatif
+de bout en bout.
+
+\capture{img/B/B1-execution.png}
+{Sortie terminal de la simulation B1 : adresses IP, position et vitesse de l'UE.}
+{fig:b1-execution}
+
+\subsection{Conclusion de B1}
+
+Le scénario de base LTE/Wi-Fi est opérationnel. L'UE dispose
+de deux interfaces réseau et se déplace à vitesse constante
+à proximité du point d'accès. Cette infrastructure constitue
+la base des expériences de trafic et de bascule réalisées
+dans les questions suivantes.
+
+\section{Question B2 : Génération d'un trafic entre l'UE et un serveur distant}
+
+\subsection{Objectif}
+
+La question B2 consiste à ajouter un serveur distant et un
+trafic applicatif continu entre ce serveur et l'UE. L'objectif
+est de disposer d'un flux mesurable afin d'observer les
+performances du réseau et de préparer l'étude de l'offloading.
+
+\subsection{Topologie et adressage}
+
+Nous conservons l'eNodeB, l'AP et l'UE de la question B1.
+Un serveur distant (\textit{RemoteHost}) est ajouté et relié
+au PGW de l'EPC par une liaison point-à-point. Une deuxième
+liaison point-à-point relie le PGW au point d'accès Wi-Fi.
+Cette dernière permet au trafic destiné au réseau Wi-Fi
+d'atteindre l'AP.
+
+Les sous-réseaux utilisés sont :
+\begin{itemize}
+    \item \texttt{1.0.0.0/8} pour la liaison PGW--serveur distant ;
+    \item \texttt{10.0.1.0/24} pour le réseau Wi-Fi ;
+    \item \texttt{10.0.2.0/24} pour la liaison PGW--AP.
+\end{itemize}
+
+Le routage statique est configuré pour permettre au serveur
+d'atteindre le réseau de l'UE. Dans cette configuration
+initiale, la route par défaut de l'UE est configurée sur
+l'interface LTE. Le passage par Wi-Fi sera déclenché dans
+la question B3.
+
+\capture{img/B/B2-topologie-adressage.png}
+{Topologie avec le serveur distant, le PGW et la liaison de retour vers l'AP.}
+{fig:b2-topologie}
+
+\subsection{Configuration du trafic UDP}
+
+Un serveur UDP est installé sur le serveur distant au port
+\texttt{9000}. Du côté de l'UE, un client UDP génère des
+paquets de taille $1024$ octets avec un intervalle de
+$10$ ms. Le trafic est donc un flux UDP à débit constant
+(\textit{Constant Bit Rate}, CBR).
+
+Le débit applicatif théorique est calculé par :
+
+\[
+D_{\mathrm{nominal}}
+=
+\frac{1024 \times 8}{0,01}
+=
+819\,200\ \mathrm{bit/s}
+=
+0,8192\ \mathrm{Mbit/s}.
+\]
+
+Le module FlowMonitor est utilisé pour collecter les
+statistiques du flux, notamment le nombre de paquets
+transmis et reçus, le débit et le délai moyen. Des traces
+LTE, une capture PCAP Wi-Fi et un fichier XML FlowMonitor
+sont également générés par le programme.
+
+\capture{img/B/B2-code-trafic.png}
+{Extrait du code installant le serveur UDP et le client CBR.}
+{fig:b2-code-trafic}
+
+\subsection{Résultats FlowMonitor}
+
+Pour le flux applicatif identifié par le Flow ID 5, les
+résultats affichés sont les suivants :
+
+\begin{table}[H]
+    \centering
+    \caption{Résultats du flux applicatif de la question B2}
+    \label{tab:b2-resultats}
+    \begin{tabular}{lr}
+        \toprule
+        \textbf{Indicateur} & \textbf{Valeur mesurée} \\
+        \midrule
+        Flow ID & 5 \\
+        Adresse source & \texttt{7.0.0.2} \\
+        Adresse destination & \texttt{1.0.0.2} \\
+        Paquets transmis & 3800 \\
+        Paquets reçus & 3800 \\
+        Paquets perdus & 0 \\
+        Débit calculé par FlowMonitor & 0,841336 Mbit/s \\
+        Délai moyen & 21,9307 ms \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Le nombre de paquets reçus est égal au nombre de paquets
+transmis et aucune perte n'est reportée pour ce flux.
+Le délai moyen observé est d'environ $21,93$ ms.
+
+Le débit calculé par FlowMonitor peut être légèrement
+différent du débit applicatif nominal, car il dépend de
+la durée effective utilisée dans le calcul statistique
+et des instants de transmission et de réception retenus.
+
+Il est important de noter que, dans cette configuration
+de B2, la route par défaut de l'UE est encore LTE. Les
+résultats de cette question constituent donc la référence
+avant l'activation du mécanisme de bascule vers le Wi-Fi.
+
+\capture{img/B/B2-resultats-flowmonitor.png}
+{Sortie terminal présentant les statistiques FlowMonitor du flux UDP de B2.}
+{fig:b2-flowmonitor}
+
+\subsection{Conclusion de B2}
+
+Le trafic UDP entre l'UE et le serveur distant est généré
+et observé avec succès. FlowMonitor fournit les indicateurs
+nécessaires à l'analyse. Le flux de référence traverse
+initialement le réseau LTE ; la question suivante introduit
+le changement dynamique de route vers le Wi-Fi.
+
+\section{Question B3 : Offloading fondé sur la distance}
+
+\subsection{Objectif}
+
+L'objectif de B3 est de mettre en place une décision
+d'offloading côté UE. Lorsque l'UE entre dans la zone
+de couverture du point d'accès Wi-Fi, le trafic est
+redirigé vers Wi-Fi. Lorsqu'il quitte cette zone, le
+trafic revient vers LTE.
+
+Le critère de décision est la distance entre l'UE et
+l'AP. Le rayon de couverture utilisé dans cette simulation
+est fixé à $30$ m.
+
+\subsection{Principe de décision}
+
+À chaque vérification, le programme calcule la distance
+$d(t)$ entre l'UE et le point d'accès. La règle de décision
+est :
+
+\[
+\begin{cases}
+\text{LTE} \rightarrow \text{Wi-Fi}, & d(t)\leq 30\ \text{m},\\
+\text{Wi-Fi} \rightarrow \text{LTE}, & d(t)>30\ \text{m}.
+\end{cases}
+\]
+
+Le contrôleur vérifie cette condition toutes les $0,5$ s.
+Lorsqu'un changement est nécessaire, l'ancienne route
+par défaut de l'UE est supprimée puis une nouvelle route
+est installée vers la passerelle de l'interface sélectionnée.
+Cette opération modifie le routage IP de l'UE sans recréer
+les équipements réseau.
+
+\capture{img/B/B3-code-controleur.png}
+{Extrait du contrôleur d'offloading : calcul de distance et mise à jour de la route par défaut.}
+{fig:b3-controleur}
+
+\subsection{Évolution de la position et instants de bascule}
+
+L'UE démarre à $x=-100$ m et avance à $5$ m/s. L'AP se
+trouve à l'origine. La distance entre les deux équipements
+diminue jusqu'au passage à proximité de l'AP, puis augmente.
+
+Le seuil géométrique de $30$ m est franchi une première
+fois à l'instant théorique :
+
+\[
+t_{\mathrm{entrée}}
+=
+\frac{100-30}{5}
+=
+14\ \text{s}.
+\]
+
+Il est franchi une deuxième fois lorsque l'UE s'éloigne :
+
+\[
+t_{\mathrm{sortie}}
+=
+\frac{100+30}{5}
+=
+26\ \text{s}.
+\]
+
+Comme le contrôleur ne vérifie la distance que toutes
+les $0,5$ s, les changements de route sont observés
+aux instants suivants :
+
+\begin{itemize}
+    \item LTE vers Wi-Fi à $t=14,5$ s, pour une distance
+    mesurée de $27,5$ m ;
+    \item Wi-Fi vers LTE à $t=26,5$ s, pour une distance
+    mesurée de $32,5$ m.
+\end{itemize}
+
+Le léger décalage par rapport aux instants théoriques
+est lié à la périodicité de vérification du contrôleur.
+
+\capture{img/B/B3-transitions-terminal.png}
+{Messages du terminal indiquant les deux transitions et les distances correspondantes.}
+{fig:b3-transitions}
+
+\subsection{Mesure du débit reçu}
+
+Le programme mesure le volume de données reçu par le
+serveur applicatif. Le débit est calculé toutes les
+$100$ ms à partir de la différence entre le nombre
+d'octets reçus pendant deux échantillonnages successifs :
+
+\[
+D(t)=
+\frac{8\left(B(t)-B(t-\Delta t)\right)}
+{\Delta t \times 10^6},
+\qquad \Delta t=0,1\ \text{s},
+\]
+
+où $B(t)$ représente le nombre total d'octets reçus
+jusqu'à l'instant $t$. Le résultat est exprimé en Mbit/s.
+
+Les mesures sont enregistrées dans le fichier
+\texttt{offloading-throughput.csv}, avec le temps,
+le débit mesuré et l'interface sélectionnée.
+
+\capture{img/B/B3-debit.png}
+{Débit reçu en fonction du temps, avec les changements d'interface LTE/Wi-Fi.}
+{fig:b3-debit}
+
+\subsection{Résultats FlowMonitor}
+
+FlowMonitor distingue les paquets émis depuis l'adresse
+LTE de l'UE et ceux émis depuis son adresse Wi-Fi.
+Les deux flux applicatifs principaux donnent les résultats
+suivants :
+
+\begin{table}[H]
+    \centering
+    \caption{Statistiques des flux LTE et Wi-Fi pour B3}
+    \label{tab:b3-flowmonitor}
+    \begin{tabular}{lrr}
+        \toprule
+        \textbf{Indicateur} & \textbf{Flux LTE} & \textbf{Flux Wi-Fi} \\
+        \midrule
+        Flow ID & 5 & 6 \\
+        Adresse source & \texttt{7.0.0.2} & \texttt{10.0.1.1} \\
+        Paquets transmis & 2600 & 1200 \\
+        Paquets reçus & 2600 & 1200 \\
+        Paquets perdus & 0 & 0 \\
+        Débit & 0,575651 Mbit/s & 0,840884 Mbit/s \\
+        Délai moyen & 21,9308 ms & 20,2019 ms \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Les deux flux confirment que le trafic applicatif a
+emprunté successivement les deux interfaces. Le contrôleur
+a sélectionné LTE avant l'entrée dans la zone Wi-Fi,
+Wi-Fi pendant le passage dans cette zone, puis LTE
+après la sortie.
+
+Les échantillons du fichier CSV autour des changements
+indiquent un débit reçu de $0,8192$ Mbit/s dans les
+intervalles observés avant et après les bascules. Aucune
+chute durable du débit n'est donc visible à la résolution
+de mesure de $100$ ms. Cela ne permet toutefois pas
+d'exclure un événement transitoire plus court que cette
+fenêtre.
+
+\subsection{Conclusion de B3}
+
+Le mécanisme d'offloading basé sur la distance fonctionne.
+Le trafic passe de LTE à Wi-Fi lorsque l'UE entre dans
+la zone de couverture, puis revient à LTE lorsqu'il
+s'en éloigne. Les mesures FlowMonitor distinguent les
+deux chemins utilisés et le fichier CSV permet de suivre
+le débit au cours du temps.
+
+\section{Question B4 : Mesure des interruptions lors des bascules}
+
+\subsection{Objectif}
+
+La question B4 vise à quantifier l'impact des changements
+d'interface sur la continuité du trafic. Nous observons
+le débit reçu, les pertes estimées et le délai maximal
+autour des deux transitions LTE/Wi-Fi.
+
+\subsection{Méthode de mesure}
+
+Le débit est mesuré sur des fenêtres de $100$ ms. Le débit
+nominal du trafic UDP est de $0,8192$ Mbit/s. Le seuil
+utilisé pour détecter une interruption est fixé à $50\%$
+du débit nominal :
+
+\[
+D_{\mathrm{seuil}}
+=
+0,5 \times 0,8192
+=
+0,4096\ \mathrm{Mbit/s}.
+\]
+
+Une fenêtre est considérée comme étant sous le seuil
+lorsque son débit mesuré est inférieur à
+$0,4096$ Mbit/s. La durée d'interruption est estimée
+en cumulant la durée des fenêtres sous ce seuil dans
+la période d'analyse entourant chaque bascule.
+
+Pour chaque transition, une fenêtre d'analyse de deux
+secondes est considérée, soit une seconde avant et une
+seconde après le changement de route. Le programme
+enregistre également le nombre de paquets transmis et
+reçus dans chaque intervalle, ainsi que le délai maximal
+calculé à partir de l'horodatage des paquets.
+
+\subsection{Horodatage des paquets}
+
+Afin de mesurer le délai de bout en bout, le programme
+utilise un en-tête \texttt{SeqTsHeader}. Cet en-tête
+contient notamment un numéro de séquence et un horodatage
+associé au paquet. À la réception, le délai est calculé
+par la différence entre l'instant courant de simulation
+et l'horodatage extrait du paquet :
+
+\[
+\mathrm{Délai}
+=
+t_{\mathrm{réception}}-t_{\mathrm{émission}}.
+\]
+
+Le programme conserve le délai maximal observé dans
+chaque fenêtre de mesure. Les compteurs sont ensuite
+réinitialisés pour l'intervalle suivant.
+
+\capture{img/B/B4-code-mesures.png}
+{Extrait du code de mesure du débit, des pertes estimées et du délai.}
+{fig:b4-code}
+
+\subsection{Résultats autour des transitions}
+
+Les résultats obtenus par le programme sont résumés
+dans le tableau~\ref{tab:b4-resultats}. Le débit seuil
+est identique pour les deux transitions.
+
+\begin{table}[H]
+    \centering
+    \caption{Mesure des interruptions autour des bascules de B4}
+    \label{tab:b4-resultats}
+    \begin{tabular}{lcc}
+        \toprule
+        \textbf{Indicateur} & \textbf{LTE vers Wi-Fi} & \textbf{Wi-Fi vers LTE} \\
+        \midrule
+        Instant de transition & 14,5 s & 26,5 s \\
+        Distance à la transition & 27,5 m & 32,5 m \\
+        Fenêtre d'analyse & 13,5--15,5 s & 25,5--27,5 s \\
+        Débit nominal & 0,8192 Mbit/s & 0,8192 Mbit/s \\
+        Seuil d'interruption & 0,4096 Mbit/s & 0,4096 Mbit/s \\
+        Durée sous le seuil & 0 s & 0 s \\
+        Pertes estimées dans la fenêtre & 0 & 0 \\
+        Délai maximal observé & 26 ms & 21 ms \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Aucune fenêtre de mesure n'est passée sous le seuil
+de $0,4096$ Mbit/s autour des deux transitions. La durée
+d'interruption mesurée est donc nulle pour les deux
+changements. Le programme n'a pas non plus relevé de
+pertes estimées dans les fenêtres étudiées. Le délai
+maximal observé atteint $26$ ms pour la transition
+LTE vers Wi-Fi et $21$ ms pour la transition Wi-Fi
+vers LTE.
+
+\capture{img/B/B4-resultats-terminal.png}
+{Sortie terminal présentant l'analyse des interruptions pour les deux transitions.}
+{fig:b4-terminal}
+
+\capture{img/B/B4-csv.png}
+{Extrait du fichier CSV contenant les mesures par fenêtre de 100 ms.}
+{fig:b4-csv}
+
+\subsection{Précautions d'interprétation}
+
+La durée d'interruption nulle signifie qu'aucune fenêtre
+de $100$ ms n'a présenté un débit inférieur au seuil
+choisi. Elle ne prouve pas qu'aucune perturbation
+inférieure à $100$ ms n'a pu se produire.
+
+De plus, le nombre de pertes calculé séparément dans
+chaque fenêtre est une estimation fondée sur la différence
+entre les compteurs de paquets transmis et reçus dans
+cet intervalle. Un paquet transmis dans une fenêtre et
+reçu dans la suivante peut affecter cette estimation.
+Pour les pertes globales du flux, les statistiques
+FlowMonitor constituent la référence : les flux
+applicatifs LTE et Wi-Fi rapportent chacun zéro paquet
+perdu dans cette exécution.
+
+Enfin, cette expérience mesure les changements de route
+entre LTE et Wi-Fi. Elle ne constitue pas, à elle seule,
+une comparaison expérimentale avec un handover LTE
+intra-réseau ; une telle comparaison nécessiterait un
+scénario et des mesures dédiés.
+
+\subsection{Conclusion de B4}
+
+Dans le scénario et avec la résolution de mesure retenus,
+les deux bascules n'entraînent pas d'interruption détectée
+selon le seuil de $50\%$ du débit nominal. Le délai maximal
+observé reste de l'ordre de quelques dizaines de
+millisecondes. Cette conclusion doit être interprétée
+à l'échelle des fenêtres de $100$ ms utilisées par le
+programme.
+
+\section{Bilan de la partie B1--B4}
+
+Les questions B1 à B4 ont permis de construire un scénario
+combinant LTE et Wi-Fi, d'y générer un trafic UDP continu,
+puis de mettre en place un mécanisme d'offloading piloté
+par la distance entre l'UE et le point d'accès.
+
+Les résultats montrent que l'UE utilise LTE avant d'entrer
+dans la zone Wi-Fi, bascule vers Wi-Fi à $14,5$ s, puis
+revient vers LTE à $26,5$ s. FlowMonitor confirme
+l'utilisation des deux interfaces et aucune perte globale
+n'est rapportée pour les flux applicatifs de cette
+exécution. L'analyse par fenêtres de $100$ ms ne détecte
+pas d'interruption selon le seuil défini.
+
+Cette première stratégie constitue une base simple de
+sélection d'interface. Ses limites, notamment la possibilité
+de bascules répétées à proximité de la frontière de
+couverture, motivent l'étude de l'hystérésis et des
+paramètres de mobilité présentée dans les questions
+suivantes.
+% ============================================================
+% FIN B1-B4
+% ============================================================
